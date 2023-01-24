@@ -1,18 +1,20 @@
 :root {
-	--mythos-pink: #502c5d;
-	--mythos-bright: #ae4ace;
+	--mythos-pink: #4c2b51;
+	--mythos-bright: #be5ad5;
 
-	--mythos-text: hsl(284deg 15% 15%);
-	--mythos-white: hsl(265deg 10% 95%);
+	--mythos-text: #fdfcfb;
+	--mythos-white: #fdfcfb;
 
-	--logos-orange: #a85d4b;
-	--logos-text: #48382a;
+	--logos-orange: #984d31;
+	--logos-text: #46362f;
+	--logos-white: #fdfcfb;
 
 	--mist-blue:#28475b;
 	--mist-text:#232b35;
 
-	--extra-grey:#686358;
-	--extra-text:#312e29;
+	--extra-grey:#635f56;
+	--extra-text:#3a3632;
+	--extra-white:#b8b6a9;
 
 	--options-green: #5f624f;
 	--options-text: #373d32;
@@ -20,12 +22,14 @@
 	--neon-pink: #f82973;
 	--neon-red: #9c053c;
 
-	--tag-yellow: #fff2ab;
-	--tag-yellow-light: #fff2ab73;
-	--status-green: #e2e9b4;
-	--status-green-light: #e2e9b473 ;
-	--spectrum-red: #f4ab96;
-	--spectrum-red-light: #f4ab9673;
+	--tag-yellow: #fff1a2;
+	--tag-yellow-light: #fff1a273;
+	--status-green: #d9e8ae;
+	--status-green-light: #d9e8ae73 ;
+	--spectrum-red: #fbc9ba;
+	--spectrum-red-light: #fbc9ba73;
+	--tag-purple: #512b71;
+	--tag-purple-light: #512b7173;
 	
 	--color-border-highlight-alt: var(--neon-red);
     --color-border-highlight: var(--neon-pink);
@@ -614,8 +618,8 @@ textarea.theme-name-input.borderless:disabled {
 }
 
 .Logos-theme textarea.theme-name-input.borderless:disabled {
-	text-shadow: 0px 2px 3px white,
-	0px 2px 4px var(--logos-orange);
+	/* text-shadow: 0px 2px 3px white, */
+	/* 0px 2px 4px var(--logos-orange); */
 }
 
 input.character-name {
@@ -802,15 +806,13 @@ div.flex-overview-block {
 }
 
 div.flex-theme-block {
-	margin: 0.3em;
-	width: 240px;
-	min-height: 500px;
-	max-width: 240px;
-	/* border: 0.2em solid grey; */
-	border-radius: 1em;
-	padding: 0.1em;
-	overflow: auto;
-	transition: transform .2s;
+    margin: 0.3em;
+    width: 240px;
+    min-height: 608px;
+    border-radius: 1em;
+    padding: 0.1em;
+    overflow: auto;
+    transition: transform .2s;
 }
 
 div.flex-theme-block:hover {
@@ -822,7 +824,7 @@ div.flex-theme-block:hover {
 .theme-block {
 	height: 100%;
 	border-style: solid;
-	padding: 5px;
+	padding: 12px;
 	border: 1px;
 	transition-duration: 0.2s;
 }
@@ -831,13 +833,8 @@ div.Mythos-theme {
 	height: 100%;
 	color: var(--mythos-text);
 	border-radius: 1em;
-	border-bottom: 1em solid var(--mythos-pink);
-	border-top: 2em solid var(--mythos-pink);
 	background-image: url(../images/mythoscardbg.webp);
-	background-color: black;
-	background-position: center;
-	background-size: 125%;
-	box-shadow: 0px -5px 0px 10px #502c5da6;
+	background-repeat: round;
 }
 
 .Mythos-theme .theme-name {
@@ -847,13 +844,11 @@ div.Mythos-theme {
 }
 
 div.Logos-theme {
-	color: var(--logos-text);
-	height: 100%;
-	border-radius: 1em;
-	border-bottom: 1em solid var(--logos-orange);
-	border-top: 2em solid var(--logos-orange);
-	background-image: url(../images/themecardbg.webp);
-	box-shadow: 0px -5px 0px 10px #a85d4ba6;
+    color: var(--logos-text);
+    height: 100%;
+    border-radius: 1em;
+    background-image: url(../images/themecardbg.webp);
+    background-repeat: round;
 }
 
 div.Crew-theme,
@@ -861,13 +856,8 @@ div.Extra-theme {
 	height: 100%;
 	color: var(--extra-text);
 	border-radius: 1em;
-	border-bottom: 1em solid var(--extra-grey);
-	border-top: 2em solid var(--extra-grey);
 	background-image: url(../images/extracardbg.webp);
-	background-color: black;
-	background-position: center;
-	background-size: cover;
-	box-shadow: 0px -5px 0px 10px #686358a6;
+	background-repeat: round;
 }
 
 div.Mist-theme {
@@ -890,11 +880,11 @@ div.Mist-theme {
 	border-radius: 1em;
 	border-bottom: 1em solid var(--options-green);
 	border-top: 1em solid var(--options-green);
-	background-image: url(../images/extracardbg.webp);
-	background-color: black;
+	/* background-image: url(../images/extracardbg.webp); */
+	/* background-color: black; */
 	background-position: center;
 	background-size: cover;
-	box-shadow: 0px -1px 0px 1px #5f624fa6;
+	/* box-shadow: 0px -1px 0px 1px #5f624fa6; */
 }
 
 div.Mythos-theme textarea.themebook-mystery.identity-input {
@@ -1225,20 +1215,30 @@ section.ally-card {
 .item-selection-context .active-tag.default-positive:hover:not(.negative-selected) {
 	font-weight: bold;
 
-	margin: 0 -0.4em;
-	padding: 0.1em 0.4em;
+	/* margin: 0 -0.4em; */
+	/* padding: 0.1em 0.4em; */
 	border-radius: 0.8em 0.3em;
 	background: transparent;
 	background-image: linear-gradient(
 	to right,
-	var(--tag-yellow),
 	var(--tag-yellow-light),
-	var(--tag-yellow)
+	var(--tag-yellow-light),
+	var(--tag-yellow-light)
 	);
 	-webkit-box-decoration-break: clone;
 	box-decoration-break: clone;
 
 	transition: font-weight 0.1s;
+}
+
+.item-selection-context .Mythos-theme .active-tag.default-positive:hover:not(.negative-selected)
+{
+	background-image: linear-gradient(
+	to right,
+	var(--tag-purple-light),
+	var(--tag-purple-light),
+	var(--tag-purple-light)
+	);
 }
 
 span.tag-question-letter {
@@ -1536,7 +1536,7 @@ span.empty-circle {
 
 .Logos-theme span.filled-circle {
 	border: 2px solid var(--logos-text);
-	background-color: rgb(134 108 108);
+	background-color: var(--logos-orange);
 }
 
 .Logos-theme span.empty-circle {
@@ -1546,7 +1546,7 @@ span.empty-circle {
 
 .Mythos-theme span.filled-circle {
 	border: 2px solid var(--mythos-text);
-	background-color: var(--mythos-bright);
+	background-color: var(--mythos-pink);
 }
 
 .Mythos-theme span.empty-circle {
@@ -1621,7 +1621,7 @@ div.themebook-name {
 	font-size: 1.2em;
 	padding: 0.2em 0em 0.2em 1em;
 	margin: 0.2em 0;
-	margin-top: -1.9em;
+	margin-top: -2px;
 	min-height: 1em;
 	/* max-height: 2em; */
 	color: white;
@@ -1634,21 +1634,18 @@ div.themebook-name {
 }
 
 .Mythos-theme div.themebook-name {
-	background: var(--mythos-pink);
+	/* background: var(--mythos-pink); */
 	color: var(--mythos-white);
 }
 
 .Logos-theme div.themebook-name {
-	background: var(--logos-orange);
+	/* background: var(--logos-orange); */
+	color: var(--logos-white);
 }
 
 .Crew-theme div.themebook-name {
-	/* background: linear-gradient( */
-	/* to right, */
-	/* rgba(20, 20, 155, 0.2), */
-	/* rgba(0, 0, 255, 0.5), */
-	/* rgba(20, 20, 155, 0.2) */
-	/* ); */
+	color: var(--extra-white);
+	margin-top: -4px;
 }
 
 .Crew-theme div.themebook-name {
@@ -1827,6 +1824,25 @@ div.burn-flame-cell {
 	-webkit-box-decoration-break: clone;
 	box-decoration-break: clone;
 
+}
+
+.item-selection-context .status .positive-selected {
+	background-image: linear-gradient(
+	to right,
+	var(--status-green),
+	var(--status-green-light),
+	var(--status-green)
+	);
+}
+
+.item-selection-context .Mythos-theme .tag .positive-selected
+{
+	background-image: linear-gradient(
+	to right,
+	var(--tag-purple),
+	var(--tag-purple-light),
+	var(--tag-purple)
+	);
 }
 
 .members-header {
@@ -3168,20 +3184,5 @@ span.secret {
 
 .improvement-edit:hover {
 	text-shadow: 0 0 8px #f82973;
-}
-
-button.clue-use-button {
-	flex: none !important;
-	margin: 0.5em;
-	border-radius: 0.5em;
-	color: white;
-	background-color: #502c5dbd;
-	box-shadow: 0 0 5px var(--mythos-pink), 0 0 10px var(--mythos-pink) inset;
-	max-width: 64px;
-}
-
-button.clue-use-button:hover {
-	background: #c5044b;
-	transition: all 0.4s ease-in-out;
 }
 
