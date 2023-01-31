@@ -2861,7 +2861,7 @@ nav.sheet-tabs.tabs {
 	border-radius: 1em;
 	/* border-bottom: 1em solid var(--mythos-pink); */
 	border-top: 2em solid var(--mythos-pink);
-	background-image: url(../images/mythoscardbg.webp);
+	background-image: url(../images/paperbg.webp);
 	background-color: black;
 	background-position: center;
 	background-size: 125%;
@@ -2895,7 +2895,7 @@ nav.sheet-tabs.tabs {
     border-radius: 0.5em;
     border-bottom: 0.5em solid var(--logos-orange);
     border-top: 2.25em solid var(--logos-orange);
-    background-image: url(../images/themecardbg.webp);
+    background-image: url(../images/paperbg.webp);
     box-shadow: 0px 0px 1px 2px #a85d4b;
     padding: 10px;
 }
