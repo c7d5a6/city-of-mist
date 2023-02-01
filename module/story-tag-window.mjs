@@ -8,7 +8,7 @@ export class StoryTagDisplayContainer {
 
 	constructor() {
 		this.element = HTMLTools.div(["scene-tag-window"]);
-		const width =  (-50) + $(document).find("#controls").width();
+		const width =  (-50) + $(document).find("#controls").width()+320;
 		const height =  50+ $(document).find("#navigation").height();
 		this.element.style.left = `${width}px`;
 		this.element.style.top = `${height}px`;
