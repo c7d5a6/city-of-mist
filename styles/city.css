@@ -1192,7 +1192,7 @@ section.ally-card {
 	);
 	-webkit-box-decoration-break: clone;
 	box-decoration-break: clone;
-
+	font-style: italic;
 	transition: font-weight 0.1s;
 }
 
@@ -1209,7 +1209,7 @@ section.ally-card {
 	);
 	-webkit-box-decoration-break: clone;
 	box-decoration-break: clone;
-
+	font-style: italic;
 	transition: font-weight 0.1s;
 }
 .item-selection-context .active-tag.default-positive:hover:not(.negative-selected) {
@@ -1804,6 +1804,7 @@ div.burn-flame-cell {
 	-webkit-box-decoration-break: clone;
 	box-decoration-break: clone;
 	color: #400000;
+	font-style: italic;
 }
 
 .yellow-highlight,
@@ -2334,6 +2335,7 @@ div.narrated-text span.narrated-status-name {
 	-webkit-box-decoration-break: clone;
 	box-decoration-break: clone;
 	color: #400000;
+	font-style: italic;
 }
 
 .main-destruction-message .theme-name{
