@@ -1135,6 +1135,7 @@ div.other-status-owner-name {
 	flex: 5;
 	margin-left: 5px;
 	margin-right: 5px;
+	font-style: italic;
 }
 
 .status-owner-block .status-owner {
@@ -1179,7 +1180,7 @@ section.ally-card {
 }
 
 .item-selection-context .active-tag.default-negative:hover:not(.positive-selected){
-	font-weight: bold;
+	font-weight: normal;
 	margin: 0 -0.4em;
 	padding: 0.1em 0.4em;
 	border-radius: 0.8em 0.3em;
@@ -1198,7 +1199,7 @@ section.ally-card {
 
 .item-selection-context .status-name:hover{
 
-	font-weight: bold;
+	font-weight: normal;
 	border-radius: 0.8em 0.3em;
 	background: transparent;
 	background-image: linear-gradient(
@@ -1275,6 +1276,8 @@ section.juice-data-block {
 *.tag-edit-button:hover {
 	text-shadow: 0 0 10px red;
 	transition-duration: 0.2s;
+	font-style: italic;
+	font-weight: normal;
 }
 
 .tags-header {
@@ -1790,7 +1793,7 @@ div.burn-flame-cell {
 .item-selection-context .status .negative-selected,
 .negative-selected .tag,
 .negative-selected .status {
-	font-weight: bold;
+	font-weight: normal;
 	margin: 0 -0.4em;
 	padding: 0.1em 0.4em;
 	border-radius: 0.8em 0.3em;
@@ -1824,7 +1827,8 @@ div.burn-flame-cell {
 	);
 	-webkit-box-decoration-break: clone;
 	box-decoration-break: clone;
-
+	font-weight: bold;
+	font-style: normal;
 }
 
 .item-selection-context .status .positive-selected {
