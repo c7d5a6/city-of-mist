@@ -12,11 +12,11 @@ export class StoryTagDisplayContainer {
 		let width, height;
 		switch (CitySettings.sceneTagWindowPosition()) {
 			case "left":
-				width =  (-50) + $(document).find("#controls").width();
+				width =  (-50) + $(document).find("#controls").width()+320;
 				height =  50+ $(document).find("#navigation").height();
 				break;
 			case "right":
-				width =  (-350) + $(document).find("#ui-right").position().left;
+				width =  (-350) + $(document).find("#ui-right").position().left+320;
 				height =  50+ $(document).find("#navigation").height();
 				break;
 			default:
