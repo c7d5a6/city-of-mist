@@ -23,6 +23,16 @@ export class HTMLTools {
 		}
 	}
 
+	static getClosestDataNT ( eventOrJQObj, prop, default_value = undefined) {
+		try {
+			const x = HTMLTools.getClosestData( eventOrJQObj, prop, default_value);
+			return x;
+		} catch (e)  {
+			return null;
+		}
+
+	}
+
 	static convertForm(str) {
 		return Array.from(str).map(x => {
 			if (x === x.toLowerCase()) return x;
@@ -187,7 +197,8 @@ export class HTMLTools {
 				description: "",
 			};
 		});
-		return await this.multiChoiceBox(list, title);
+		const ret =  await this.multiChoiceBox(list, title);
+		if (ret) return ret; else return [];
 	}
 
 	static div(cssClass) {

@@ -198,7 +198,9 @@
 			"templates": ["default"],
 			"subtype": "",
 			"taglist": [],
-			"statuslist": []
+			"statuslist": [],
+			"hideName": false,
+			"header": "default"
 		},
 		"journal": {
 			"answer": "",

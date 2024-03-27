@@ -5,10 +5,27 @@
 export class EnhancedActorDirectory {
 
 	static init () {
+		Hooks.on( "encryptionEnable", async () => {
+			ui.actors.render(true);
+		});
 
-		Hooks.on("updateActor", (actor, diff) => {
+		const oldRender = ActorDirectory.prototype._render;
+		ActorDirectory.prototype._render = async function (...args) {
+			// console.log("Decrypting All");
+			const promises = game.actors.map( async (actor) => {
+				if (actor.decryptData)
+					await actor.decryptData();
+			});
+			await Promise.all(promises);
+			await oldRender.call(this, ...args);
+		};
+
+		Hooks.on("updateActor", async (actor, diff) => {
 			//NOTE: There's probably a better way to just re-render the actor instead of drawing the whole sidebar, but I don't know what that is right now
+			if (actor.decryptData)
+				await actor.decryptData();
 			if (diff?.system?.mythos) {
+				//compabitlity with TaragnorSecurity Module
 				ui.actors.render(true);
 				return true;
 			}
@@ -17,7 +34,7 @@ export class EnhancedActorDirectory {
 			return true;
 		});
 
-		ActorDirectory.prototype._getEntryContextOptionsOldCity = ActorDirectory.prototype._getEntryContextOptions;
+		const _getEntryContextOptionsOldCity = ActorDirectory.prototype._getEntryContextOptions;
 
 		//Sets window title to directory Name on character sheets
 		Object.defineProperty(ActorSheet.prototype, 'title', {
@@ -31,15 +48,16 @@ export class EnhancedActorDirectory {
 
 
 		ActorDirectory.prototype._getEntryContextOptions = function() {
-			const options = this._getEntryContextOptionsOldCity();
+			const options = _getEntryContextOptionsOldCity.call(this);
 			for (let option of options) {
 				switch (option.name) {
 					case "SIDEBAR.CharArt":
 						option.callback = li => {
 							const actor = game.actors.get(li.data("documentId"));
-							new ImagePopout(actor.data.img, {
+							console.log("Calling callback on ${actor.name}");
+							new ImagePopout(actor.img, {
 								title: actor.directoryName,
-								shareable: true,
+								// shareable: true,
 								uuid: actor.uuid
 							}).render(true);
 						}
@@ -47,7 +65,7 @@ export class EnhancedActorDirectory {
 					case "SIDEBAR.TokenArt":
 						option.callback = li => {
 							const actor = game.actors.get(li.data("documentId"));
-							new ImagePopout(actor.data.token.img, {
+							new ImagePopout(actor.token.img, {
 								title: actor.directoryName,
 								shareable: true,
 								uuid: actor.uuid
@@ -58,15 +76,11 @@ export class EnhancedActorDirectory {
 						break;
 				}
 			}
+			// Debug(options);
 			return options;
 		}
 
-		ActorDirectory.prototype._renderInnerOld =ActorDirectory.prototype._renderInner;
-
-		ActorDirectory.prototype._renderInner = async function(data){
-			data.documentPartial = "systems/city-of-mist/module/enhanced-directory/enhanced-template.hbs";
-			return this._renderInnerOld (data);
-		}
+		ActorDirectory.entryPartial =  "systems/city-of-mist/module/enhanced-directory/enhanced-template.hbs";
 
   ActorDirectory.prototype._onSearchFilter = function (_event, query, rgx, html) {
     const isSearch = !!query;

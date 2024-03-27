@@ -61,12 +61,12 @@ export class CityHandlebarsHelpers extends HandlebarsHelpers {
 		'getMoveGroup': function (actor) {
 			const data = actor.system;
 			if (!data)
-				throw new Error(`NO Data for ${actor.name}`)
+				throw new Error(`No Data for ${actor.name}`)
 			const moveList = CityHelpers.getMoves();
 			switch (data.selectedMoveGroup) {
-				case "core": return moveList.filter(x=> x.system.category=="Core");
-				case "special": return moveList.filter(x=> x.system.category=="Advanced");
-				case "SHB": return moveList.filter(x=> x.system.category=="SHB");
+				case "core": return moveList.filter(x=> x.system.category=="Core" && actor.canUseMove(x));
+				case "special": return moveList.filter(x=> x.system.category=="Advanced" && actor.canUseMove(x));
+				case "SHB": return moveList.filter(x=> x.system.category=="SHB" && actor.canUseMove(x));
 				default:
 					console.warn(`No default move group for actor group: ${data?.selectedMoveGroup}`);
 					return moveList.filter(x=> x.system.category == "Core");
@@ -153,15 +153,22 @@ export class CityHandlebarsHelpers extends HandlebarsHelpers {
 			} catch (e) {
 				console.log(`Trouble finding tag owner ${tagOwnerId}, tokenID = ${tokenId}`);
 				console.log(e);
+				return;
 			}
-			if (tagowner == undefined) {
+			if (!tagowner) {
 				console.warn( "null tag owner passed into defualtTagDirection Handlebars helper");
 			}
-			if (tagowner.documentName == "Scene") {
+			if (tagowner?.documentName == "Scene") {
 				return -1;
 			}
+			try {
 			const tag = tagowner.items.find(x=> x.id == tagId);
 			return SelectedTagsAndStatus.getDefaultTagDirection(tag, tagowner);
+			} catch (e){
+				Debug(tagowner);
+				throw e;
+
+			}
 		},
 
 		'hasActivatedItem': function (tag) {
@@ -236,8 +243,17 @@ export class CityHandlebarsHelpers extends HandlebarsHelpers {
 				console.error(e);
 				return "ERROR";
 			}
+		},
+		'hasMist': function (actor) {
+			return actor.getNumberOfThemes("Mist") >= 1;
+		},
+		'hasMythos': function (actor) {
+			return actor.getNumberOfThemes("Mythos") >= 1;
+		},
 
-		}
+		'isUsingStoryList': function () {
+			return CitySettings.sceneTagWindowUsed();
+	}
 
 	}; //end of object holding helpers
 } // end of class

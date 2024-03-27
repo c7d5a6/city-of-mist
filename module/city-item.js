@@ -4,6 +4,8 @@ import {CityDialogs} from "./city-dialogs.mjs";
 import {CityHelpers} from "./city-helpers.js";
 import {TagAndStatusCleanupSessionM} from "./city-sessions.mjs";
 import {CitySockets} from "./city-sockets.mjs";
+import { CityLogger } from "./city-logger.mjs";
+import { CitySettings } from "./settings.js";
 
 export class CityItem extends Item {
 
@@ -28,7 +30,7 @@ export class CityItem extends Item {
 	}
 
 	/*
-	Options for effect_class on improvmeents
+	Options for effect_class on improvmeents;
 		THEME_DYN_SELECT: select a type of core move that is now dynamite when using tags from this theme.
 		THEME_DYN_FACE: WHen using tag from this theme, face danger is dyanmtie
 		THEME_DYN_HIT: WHen using tag from this theme, HWAYG is dyanmtie
@@ -40,6 +42,10 @@ export class CityItem extends Item {
 
 	hasEffectClass(cl) {
 		return this.effect_classes.includes(cl);
+	}
+
+	isAutoDynamite() {
+		return this.hasEffectClass("AUTODYN");
 	}
 
 	get description() {
@@ -275,7 +281,7 @@ export class CityItem extends Item {
 		weakTags.sort( (a,b) => a.letter.localeCompare(b.letter));
 		await this.update( {"system.weakness_tagstk": 0});
 		const weakTagsObj = Object.assign({}, weakTags);
-		console.log(weakTagsObj);
+		// console.log(weakTagsObj);
 		await this.update( {"system.weakness_tagstk": weakTagsObj});
 	}
 
@@ -344,13 +350,33 @@ export class CityItem extends Item {
 		return this.system.tag_question == "_" || this.system.custom_tag;
 	}
 
+	async destroyThemeMessage(BUImpGained = 0) {
+		await CityLogger.rawHTMLLog(this.parent, await this.printDestructionManifest(0), false);
+
+	}
+
+	async destructionTest(BUImpGained = 0) {
+		return CityLogger.rawHTMLLog(this.parent, await this.printDestructionManifest(0), false);
+	}
+
 	async printDestructionManifest(BUImpGained) {
 		//used on themes and returns html string
 		const BUGenerated = this.getBuildUpValue();
-		const tagdata = this.tags().map(x=> x.data);
-		const impdata = this.improvements().map(x=> x.data);
-		const manifest = await renderTemplate("systems/city-of-mist/templates/theme-destruction.html", { BUGenerated, owner: this.parent, theme: this.data, tags: tagdata, improvements: impdata, BUImpGained} );
+		const tagdata = this.tags();
+		const impdata = this.improvements();
+		const manifest = await renderTemplate("systems/city-of-mist/templates/theme-destruction.html", { BUGenerated, owner: this.parent, theme: this, tags: tagdata, improvements: impdata, BUImpGained} );
 		return manifest.replaceAll("\n", "");
+	}
+
+	get crack() {
+		const crack = this.system?.crack ?? -999;
+		if (crack == -999)
+		throw new Error(`crack not available on ${this.type}`);
+		return crack.reduce( (acc, v) => acc+v, 0);
+	}
+
+	get fade() {
+		return this.crack;
 	}
 
 	async addFade(amount = 1) {
@@ -394,6 +420,7 @@ export class CityItem extends Item {
 		else if (extra_upgrades > 0)
 			nascent = false;
 		await this.update( {data: {attention: newArr, unspent_upgrades, nascent}});
+		await CityHelpers.modificationLog(this.parent, `Attention Gained `, this, `Current ${await this.getAttention()}`);
 		return extra_upgrades;
 	}
 
@@ -412,6 +439,7 @@ export class CityItem extends Item {
 		else if (extra_upgrades > 0)
 			nascent = false;
 		await this.update( {data: {attention: newArr, unspent_upgrades, nascent}});
+		await CityHelpers.modificationLog(this.parent,  `Attention removed`, this, `Current ${await this.getAttention()}`);
 		return extra_upgrades;
 	}
 
@@ -485,9 +513,47 @@ export class CityItem extends Item {
 				return this.addStatus_classic(tierOrBoxes, newname);
 			case "reloaded":
 				return this.addStatus_reloaded(tierOrBoxes, newname);
+			case "otherscape":
+				return this.addStatus_otherscape(tierOrBoxes, newname);
 			default:
 				ui.notifications.warn(`Unknown System for adding statuses: ${system}`);
 				throw new Error(`Unknown System: ${system}`);
+		}
+	}
+
+	/**shows status tier and pips potentially as a string*/
+	get tierString() {
+		if (CitySettings.isOtherscapeStatuses()) {
+			let pips = this.system.pips + (this.system.tier > 0 ? 1 << (this.system.tier-1) : 0);
+			let arr = [];
+			while (pips > 0) {
+				arr.push( pips & 1? 1: 0)
+				pips = pips >> 1;
+			}
+			return arr.map(
+				x=> x
+				? '<span class="filled-circle tracker-circle"></span>'
+				:'<span class="empty-circle-status tracker-circle"></span>'
+			).join("");
+		}
+	return String(this.system.tier);
+	}
+
+	get pipString() {
+		if (CitySettings.isOtherscapeStatuses()) {
+			let pips = this.system.pips + (this.system.tier > 0 ? 1 << (this.system.tier-1) : 0);
+			let arr = [];
+			while (pips > 0) {
+				arr.push( pips & 1? 1: 0)
+				pips = pips >> 1;
+			}
+			return arr.map(
+				x=> x
+				? '<span class="filled-circle tracker-circle"></span>'
+				: '<span class="empty-circle-status tracker-circle"></span>'
+			).join("");
+		} else {
+			return `${this.system.pips} pips`;
 		}
 	}
 
@@ -532,6 +598,8 @@ export class CityItem extends Item {
 				return this.subtractStatus_classic(tierOrBoxes, newname);
 			case "reloaded" :
 				return this.subtractStatus_reloaded(tierOrBoxes, newname);
+			case "otherscape" :
+				return this.subtractStatus_otherscape(tierOrBoxes, newname);
 			default:
 				ui.notifications.warn(`Unknown System for adding statuses: ${system}`);
 				throw new Error(`Unknown System: ${system}`);
@@ -552,7 +620,34 @@ export class CityItem extends Item {
 		let pips = this.system.pips;
 		pips = 0;
 		tier = Math.max(tier - ntier, 0);
-		return await this.update( {name:newname, data: {tier, pips}});
+		return await this.update( {name:newname, system: {tier, pips}});
+	}
+
+	async subtractStatus_otherscape(tier, newname = null) {
+		const pips = this.system.pips + (this.system.tier > 0 ? 1 << (this.system.tier-1) : 0);
+		const newpips = pips >> tier;
+		return await this.refreshStatus_otherscape(newpips, newname)
+	}
+
+	async addStatus_otherscape(tier, newname = null) {
+		const pips = this.system.pips + (this.system.tier > 0 ? 1 << (this.system.tier-1) : 0);
+ 		while (pips & (1 << tier - 1)) {
+			tier++;
+			if (tier > 10) throw new Error("Overflow");
+		}
+		const newpips = pips + (1 << tier - 1);
+		return await this.refreshStatus_otherscape(newpips, newname);
+	}
+
+	async refreshStatus_otherscape(newpips, newname = this.name) {
+		let pips = newpips;
+		let tier = 0;
+		while (pips) {
+			pips = pips >> 1;
+			tier++;
+		}
+		pips = newpips   - (tier > 0 ? (1 << tier - 1) : 0);
+		return await this.update({ name: newname, system: {pips, tier}});
 	}
 
 	async decUnspentUpgrades() {
@@ -882,12 +977,19 @@ export class CityItem extends Item {
 	async spendClue() {
 		if (this.getAmount() <= 0)
 			throw new Error("Can't spend clue with no amount")
-		await ClueChatCards.postClue( {
-			actorId: this.actor.id,
-			metaSource: this,
-			method: this.system.method,
-			source: this.system.source,
-		});
+		if (CitySettings.useClueBoxes()) {
+			await ClueChatCards.postClue( {
+				actorId: this.actor.id,
+				metaSource: this,
+				method: this.system.method,
+				source: this.system.source,
+			});
+		} else {
+			const templateData = {actor: this.parent, clue: this};
+			const html = await renderTemplate("systems/city-of-mist/templates/parts/clue-use-no-card.hbs", templateData);
+			await CityLogger.sendToChat2(html, {actor: this.parent});
+
+		}
 		await this.spend();
 	}
 
@@ -974,7 +1076,7 @@ export class CityItem extends Item {
 			throw new Error("Type is not GM move");
 		const {taglist, statuslist, html, options} = await this.prepareToRenderGMMove(actor);
 		if (await CityDialogs.GMMoveTextBox(this.displayedName, html, options)) {
-			actor.executeGMMove(this);
+			actor.executeGMMove(this, actor);
 		}
 	}
 
@@ -1002,11 +1104,11 @@ export class CityItem extends Item {
 		if (Number.isNaN(collective_size)) {
 			collective_size = 0;
 		}
-		let displayedText = text;
+		let displayedText = this.applyHeader(text);
 		if (!options?.showPrivate) {
-			displayedText = CityHelpers.removeWithinBraces(text);
+			displayedText = CityHelpers.removeWithinBraces(displayedText);
 		} else {
-			displayedText = CityHelpers.formatWithinBraces(text);
+			displayedText = CityHelpers.formatWithinBraces(displayedText);
 		}
 		const {html:taghtml , taglist, statuslist: neostatuslist }  = CityHelpers.unifiedSubstitution(displayedText, collective_size);
 		const {html: statushtml, statuslist:extrastatuslist } = CityHelpers.autoAddstatusClassSubstitution(taghtml);
@@ -1024,5 +1126,88 @@ export class CityItem extends Item {
 		return {html, taglist, statuslist};
 	}
 
-}
+	applyHeader(text) {
+		switch (this.moveHeader) {
+			case "symbols": return this.applyHeader_symbol(text);
+			case "text" : return this.applyHeader_text(text);
+			default: return text;
+		}
+	}
 
+	get moveHeader() {
+		switch (this.system.header) {
+			case "text": return "text";
+			case "symbols": return "symbols";
+			case "none" : return "none";
+			default: break;
+		}
+		return  CitySettings.GMMoveHeaderSetting();
+	}
+
+	applyHeader_symbol(text) {
+		let local;
+		let icon;
+		switch (this.system.subtype) {
+			case "soft": {
+				local = localize("CityOfMist.terms.softMove");
+				icon = `<i class="fa-solid fa-chevron-right"></i>`;
+				break;
+			}
+			case "hard": {
+				local = localize("CityOfMist.terms.hardMove");
+				icon = `<i class="fa-solid fa-angles-right"></i>`;
+				break;
+			}
+			case "intrusion": {
+				local = localize("CityOfMist.terms.intrusion");
+				icon = `<i class="fa-solid fa-circle-exclamation"></i>`;
+				break;
+			}
+			case "custom": {
+				local = localize("CityOfMist.terms.customMove");
+				icon = `<i class="fa-solid fa-circle-dot"></i>`;
+				break;
+			}
+			case "downtime": {
+				local = localize("CityOfMist.terms.downtimeMoves");
+				icon = `<i class="fa-solid fa-bed"></i>`;
+				break;
+			}
+			case "entrance": {
+				local = localize("CityOfMist.terms.enterScene");
+				icon = `<i class="fa-solid fa-door-open"></i>`;
+				break;
+			}
+			default: console.error(`Unknown subtype: ${this.system.subtype}`);
+
+		}
+		const symbol = `<span title="${local}"> ${icon}</span>`
+		return symbol + " " + text;
+	}
+
+	applyHeader_text(text) {
+		let local;
+		switch (this.system.subtype) {
+			case "soft":
+				local = localize("CityOfMist.settings.gmmoveheaders.soft");
+				return local + " " + text;
+			case "hard":
+				local = localize("CityOfMist.settings.gmmoveheaders.hard");
+				return local + " " + text;
+			case "intrusion":
+				local = localize("CityOfMist.settings.gmmoveheaders.intrusion");
+				return local + " " + text;
+			case "custom":
+				return `${text}`;
+			case "downtime":
+				local = localize("CityOfMist.settings.gmmoveheaders.downtime");
+				return local + " " + text;
+			case "entrance":
+				local = localize("CityOfMist.settings.gmmoveheaders.entrance");
+				return local + " " + text;
+			default: console.error(`Unknown subtype: ${this.system.subtype}`);
+		}
+		return text;
+	}
+
+}

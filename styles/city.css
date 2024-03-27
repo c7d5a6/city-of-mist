@@ -917,6 +917,19 @@ div.flex-row-left {
 	justify-content: flex-start;
 }
 
+div.flex-row-center {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: center;
+
+}
+
+.align-center {
+	align-items:center;
+
+}
+
 section.card-style {
     /* float: left; */
     margin: 0 10px 10px 0;
@@ -1524,6 +1537,19 @@ span.filled-circle {
 	display: inline-block;
 }
 
+span.empty-circle-status {
+	margin: auto;
+	height: 1em !important;
+	width: 1em !important;
+	min-width: 1em;
+	border-style: solid;
+	border-width: 2px;
+	border-color: rgba(0, 0, 0, 255);
+	background-color: rgba(237, 231, 225,255 );
+	border-radius: 50%;
+	display: inline-block;
+}
+
 span.empty-circle {
 	margin: auto;
 	height: 1em !important;
@@ -2036,7 +2062,7 @@ label.scene-tags {
 }
 
 textarea.gmmove-description {
-	height: 6em;
+	height: 15em;
 }
 
 textarea.gmmove-description:disabled {
@@ -2102,14 +2128,18 @@ button.execute-move-button:hover {
 	0 0 10px rgba(0, 0, 0, 0.3) inset;
 }
 
-.city-roll div.actor-name {
+.city-roll div.actor-name,
+.city-move div.actor-name
+{
 	font-size: larger;
 	text-align: center;
 	color: var(--logos-text);
 	font-weight: bold;
 }
 
-.city-roll div.move-name {
+.city-roll div.move-name,
+.city-move div.move-name
+{
 	font-family: 'Rift Bold';
 	font-size: 1.8em;
 	line-height: 1em;
@@ -3192,3 +3222,21 @@ span.secret {
 	text-shadow: 0 0 8px #f82973;
 }
 
+
+button.clue-use-button:hover {
+	background: #c5044b;
+	transition: all 0.4s ease-in-out;
+}
+
+.fas.green-icon {
+	color:green;
+}
+
+.pc-downtime-selector .header {
+	font-family: 'Rift Bold';
+	font-size: 1.8em;
+	line-height: 1em;
+	font-weight: bold;
+	color: var(--logos-orange);
+	text-align: center;
+}

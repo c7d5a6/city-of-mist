@@ -6,6 +6,10 @@ import { CityLogger } from "./city-logger.mjs";
 import { Sounds } from "./tools/sounds.mjs";
 import { TokenTools } from "./tools/token-tools.mjs";
 import {CityDialogs} from "./city-dialogs.mjs";
+import {SceneTags} from "./scene-tags.mjs";
+import { DowntimeSessionM } from "./city-sessions.mjs";
+import { CitySockets } from "./city-sockets.mjs";
+
 
 export class CityHelpers {
 
@@ -117,8 +121,10 @@ export class CityHelpers {
 				return this.getOwner(ownerId);
 			if (!tokenId)
 				throw new Error(` No Token Id provided`);
-			const sceneTokenActors = this.getSceneTokenActors(scene);
-			return sceneTokenActors.find( x=> x?.token?.id == tokenId);
+			const token = scene.tokens.get(tokenId);
+			return token.actor;
+			// const sceneTokenActors = this.getSceneTokenActors(scene);
+			// return sceneTokenActors.find( x=> x?.token?.id == tokenId);
 		}
 	}
 
@@ -184,8 +190,49 @@ export class CityHelpers {
 	}
 
 	static async narratorDialog(container= null) {
-		return await CityDialogs.narratorDialog(container);
+		const text = await CityDialogs.narratorDialog(container);
+		if (!text) return;
+		const {html :modified_html, taglist, statuslist} = CityHelpers.unifiedSubstitution(text);
+		await this.processTextTagsStatuses(taglist, statuslist, null);
+		await CityHelpers.sendNarratedMessage(modified_html);
+
 	}
+
+	/**applies tags and statuses in lists where actor is the active actor
+
+@param {CityItem[]} taglist
+@param {CityItem[]}statuslist
+@param {CityActor} actor
+*/
+	static async processTextTagsStatuses(taglist, statuslist, actor = null) {
+		for (const {name: tagname, options} of taglist) {
+			if (options.scene) {
+				await SceneTags.createSceneTag(tagname.trim(), true, options);
+				continue;
+			}
+			if (options.autoApply) {
+				if (actor)
+					await actor.createStoryTag(tagname.trim(), true, options);
+				else
+					await SceneTags.createSceneTag(tagname.trim(), true, options);
+			}
+		}
+
+		for (const {name, tier, options} of statuslist) {
+			if (options.scene) {
+				await SceneTags.createSceneStatus(name.trim(), tier,0, options);
+				continue;
+			}
+			if (options.autoApply) {
+				if (actor)
+					await actor.addOrCreateStatus(name.trim(), tier, 0, options);
+				else
+					await SceneTags.createSceneStatus(name.trim(), tier, 0, options);
+			}
+		}
+	}
+
+
 
 	static parseTags(text) {
 		let retarr = [];
@@ -283,7 +330,7 @@ export class CityHelpers {
 					tier = String(Number(tier) + status_mod);
 				}
 				const autoStatus = options.autoApply ? "auto-status" : "";
-				const newtext = `<span draggable="true" class="narrated-status-name draggable ${autoStatus}" data-draggable-type="status">${formatted_statusname}-<span class="status-tier">${tier}</span></span>`;
+				const newtext = `<span draggable="true" class="narrated-status-name draggable ${autoStatus}" data-draggable-type="status" data-options='${JSON.stringify(options)}'>${formatted_statusname}-<span class="status-tier">${tier}</span></span>`;
 				text = text.replace(match[0], newtext);
 				statuslist.push( {
 					name: formatted_statusname,
@@ -295,7 +342,7 @@ export class CityHelpers {
 					name,
 					options
 				});
-				const newtext = `<span class="narrated-story-tag">${name}</span>`;
+				const newtext = `<span draggable="true" class="narrated-story-tag draggable" data-draggable-type="tag" data-options='${JSON.stringify(options)}'>${name}</span>`;
 				text = text.replace(match[0] , newtext);
 			}
 			match = regex.exec(text);
@@ -432,7 +479,8 @@ export class CityHelpers {
 	}
 
 	static refreshSheet(actor) {
-		setTimeout( () => actor.sheet.render(true, {}), 1);
+		setTimeout( () => actor.sheet.render(false, {}), 1);
+		// setTimeout( () => actor.sheet.render(true, {}), 1);
 	}
 
 	static async ensureTokenLinked(_scene, token) {
@@ -506,14 +554,18 @@ export class CityHelpers {
 
 	static async startDowntime() {
 		if (!game.user.isGM) return;
-		const PCList = await this.downtimePCSelector();
-		if (PCList === null) return;
-		for (const pc of PCList) {
-			await pc.onDowntime();
-		}
-		//TODO: Do downtime action selector (break up tag restore to own thing)
-		await this.triggerDowntimeMoves();
+		await this.PCDowntime();
+		await this.promptDowntimeMovesList();
 	}
+
+	static async PCDowntime() {
+		const PCList = await this.downtimePCSelector();
+		if (PCList.length > 0 ) {
+			const s = new DowntimeSessionM(PCList);
+			CitySockets.execSession(s);
+		}
+	}
+
 
 	/** displays dialog for selecting which PCs get downtime. Can return [actor], empty array for no one or null indicating a cancel
 	*/
@@ -525,19 +577,57 @@ export class CityHelpers {
 		return idList.map( id => PCList.find( actor => actor.id == id))
 	}
 
-	static async triggerDowntimeMoves() {
-		const tokens = CityHelpers.getVisibleActiveSceneTokenActors();
-		const dangermoves = tokens
+	static async promptDowntimeMovesList() {
+		if (!game.user.isGM) return;
+		const tokens = TokenTools.getActiveSceneTokenActors();
+		const actorWithMovesList = tokens
 			.filter(actor => actor.is_danger_or_extra())
-			.map(actor=> actor.getGMMoves())
-			.filter(gmmovearr => gmmovearr.length > 0)
-			.flat(1)
-			.filter(gmmove => gmmove.isDowntimeTriggeredMove());
-		for (const move of dangermoves) {
-			if (game.user.isGM)
-				await move.GMMovePopUp();
-		}
+			.map(actor=> ({
+				movelist: actor.getGMMoves()
+				.filter(gmmove => gmmove.isDowntimeTriggeredMove()),
+				actor: actor,
+			})
+			)
+			.filter(({movelist}) => movelist.length > 0)
+			.flat(1);
+		await CityDialogs.downtimeGMMoveDialog(actorWithMovesList);
+	}
 
+	static async downtimeActionChoice(choice, actor) {
+		let moveText = "";
+		switch (choice) {
+			case "logos":
+				moveText = localize( "CityOfMist.moves.downtime.0");
+				break;
+			case "workcase":
+				moveText = localize( "CityOfMist.moves.downtime.1");
+				break;
+			case "mythos":
+				moveText = localize( "CityOfMist.moves.downtime.2");
+				break;
+			case "recover":
+				moveText = localize( "CityOfMist.moves.downtime.4");
+				break;
+			case "juice":
+				moveText = localize( "CityOfMist.dialog.downtime.juice");
+				break;
+
+			case "unburn":
+				moveText = localize( "CityOfMist.dialog.downtime.unburn");
+				break;
+			default:
+				ui.notifications.warn(`Unknown Downtime Action ${choice}`)
+				return;
+		}
+		const html = await renderTemplate("systems/city-of-mist/templates/pc-downtime-move.hbs", {actor, moveText});
+		const messageOptions = {};
+		const messageData = {
+			// speaker: ChatMessage.getSpeaker(),
+			speaker: {alias: actor.displayedName},
+			content: html,
+			user: game.user,
+		};
+ await ChatMessage.create(messageData, messageOptions);
 
 	}
 
@@ -581,24 +671,6 @@ export class CityHelpers {
 		const setting = game.settings.get("city-of-mist", "execEntranceMoves");
 		return setting == "auto";
 	}
-
-	static async dragFunctionality(_app, html, _data) {
-		html.find('.draggable').on("dragstart", this.dragStart.bind(this));
-		html.find('.draggable').on("dragend", this.dragEnd.bind(this));
-	}
-
-	static async dragStart(event) {
-		event.stopPropagation();
-		$(event.currentTarget).addClass("dragging");
-		return true;
-	}
-
-	static async dragEnd(event) {
-		event.stopPropagation();
-		$(event.currentTarget).removeClass("dragging");
-		return true;
-	}
-
 
 	static getStatusAdditionSystem() {
 return game.settings.get("city-of-mist", "statusAdditionSystem");
@@ -782,6 +854,72 @@ return game.settings.get("city-of-mist", "statusSubtractionSystem");
 
 	static altPowerEnabled() {
 		return game.settings.get('city-of-mist', "altPower") ?? false;
+	}
+
+	static async toggleTokensCombatState(tokens) {
+		for (const token of tokens) {
+			if (token.inCombat)
+				await this.removeTokensFromCombat([token]);
+			else
+				await this.addTokensToCombat([token]);
+		}
+	}
+
+	static async addTokensToCombat(tokens) {
+		const combat = await this.getOrCreateCombat();
+      const createData = tokens.map(t => {
+        return {
+          tokenId: t.id,
+          sceneId: t.scene.id,
+          actorId: t.document.actorId,
+          hidden: t.document.hidden
+        }
+      });
+      return combat.createEmbeddedDocuments("Combatant", createData);
+	}
+
+	static async removeTokensFromCombat(tokens) {
+		const combat = await this.getOrCreateCombat();
+		const tokenIds = new Set(tokens.map(t => t.id));
+		const combatantIds = combat.combatants.reduce((ids, c) => {
+			if (tokenIds.has(c.tokenId)) ids.push(c.id);
+			return ids;
+		}, []);
+		return combat.deleteEmbeddedDocuments("Combatant", combatantIds);
+	}
+
+	static async getOrCreateCombat() {
+		let combat = game.combats.viewed;
+		if ( !combat ) {
+			if ( game.user.isGM ) {
+				const cls = getDocumentClass("Combat");
+				const state = false;
+				combat = await cls.create({scene: canvas.scene.id, active: true}, {render: !state || !tokens.length});
+			} else {
+				ui.notifications.warn("COMBAT.NoneActive", {localize: true});
+				throw new Error("No combat active");
+			}
+		}
+		return combat;
+	}
+
+	static async toggleCombat(event) {
+		const tokenId = getClosestData(event, "tokenId");
+		if (!tokenId)
+			throw new Error("No token ID given");
+		const sceneId = getClosestData(event, "sceneId");
+		// const token = game.scenes.active.tokens.get(tokenId);
+		const token = game.scenes.contents
+			.flatMap(sc=> sc.tokens)
+			.find(tokens => tokens.get(tokenId))
+			.get(tokenId);
+		if (!token)
+			throw new Error( `Can't find token id ${tokenId}`);
+		await CityHelpers.toggleTokensCombatState([token.object]);
+		if (token.inCombat)
+			await CityHelpers.playTagOn();
+		else
+			await CityHelpers.playTagOff()
 	}
 
 } //end of class

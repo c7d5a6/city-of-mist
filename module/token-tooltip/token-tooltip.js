@@ -10,7 +10,6 @@ const CSS_SHOW = `${CSS_PREFIX}show`;
 const CSS_NAME = `${CSS_PREFIX}name`;
 
 export class TokenTooltip {
-
 	constructor() {
 		Hooks.on("canvasReady", () => {
 			this._tokenHover = false;
@@ -101,7 +100,7 @@ export class TokenTooltip {
 	updatePosition(token) {
 		const top = Math.floor(token.worldTransform.ty - 8);
 		const tokenWidth = token.w * canvas.stage.scale.x;
-		const left = Math.ceil(token.worldTransform.tx + tokenWidth + 4);
+		const left = Math.ceil(token.worldTransform.tx + tokenWidth - 2);
 		this.element.style.left = `${left}px`;
 		this.element.style.top = `${top}px`;
 	}
@@ -115,21 +114,28 @@ export class TokenTooltip {
 	}
 
 	async updateData(token) {
-		// emptyNode(this.nameElement);
 		this.nameElement.style.display = '';
-		if (token.actor.my_statuses.length + token.actor.my_story_tags.length <= 0) {
-			this.nameElement.innerHTML = "";
-			return false;
-		}
 		const templateHTML = await renderTemplate("systems/city-of-mist/module/token-tooltip/tooltip.html", {token, actor: token.actor, sheetowner:null });
 		this.nameElement.innerHTML = templateHTML;
 		HTMLHandlers.applyBasicHandlers(this.element);
-		// $(this.nameElement).find(".tag .name").click(SelectedTagsAndStatus.selectTagHandler);
-		// $(this.nameElement).find(".tag .name").rightclick(SelectedTagsAndStatus.selectTagHandler_invert);
-		// $(this.nameElement).find(".status .name").click(SelectedTagsAndStatus.selectStatusHandler);
-		// $(this.nameElement).find(".status .name").rightclick(SelectedTagsAndStatus.selectStatusHandler_invert);
+		$(this.element).find(".toggle-combat").on("click", ev => CityHelpers.toggleCombat(ev))
+
+		//TODO: refersh window on delete tag or status
 		return true;
 	}
+
+	// async toggleCombat(event) {
+	// 	// const ownerId = getClosestData(event, "ownerId");
+	// 	const tokenId = getClosestData(event, "tokenId");
+	// 	const sceneId = getClosestData(event, "sceneId");
+	// 	// const owner = await CityHeleprs.getOwner(ownerId, tokenId, sceneId);
+	// 	const token = game.scenes.active.tokens.get(tokenId);
+	// 	await CityHelpers.toggleTokensCombatState([token.object]);
+	// 	if (token.inCombat)
+	// 		await CityHelpers.playTagOn();
+	// 	else
+	// 		await CityHelpers.playTagOff()
+	// }
 
 } // end of class
 

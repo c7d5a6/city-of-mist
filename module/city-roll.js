@@ -55,16 +55,6 @@ export class CityRoll {
 		const type = options?.newtype ?? move.system.type;
 		switch (type) {
 			case "standard":
-				if (await CityRoll.verifyRequiredInfo(moveId, actor)) {
-					const dialogReturn = await RollDialog.create(this, moveId, actor);
-					if (!dialogReturn)
-						return;
-					let {modList, options} = dialogReturn;
-
-					this.#selectedList = modList;
-					this.#options = {...options,
-						...this.#options};
-				}
 				break;
 			case "logosroll":
 				await this.logosRoll(moveId, actor);
@@ -72,11 +62,30 @@ export class CityRoll {
 			case "mythosroll":
 				await this.mythosRoll(moveId, actor);
 				break;
+			case "mistroll":
+				await this.mistRoll(moveId, actor);
+				break;
 			case "noroll":
 				await this.noRoll(moveId, actor);
 				break;
 			default:
 				throw new Error(`Unknown Move Type ${type}`);
+		}
+		if (move.isAutoDynamite())
+			options.dynamiteAllowed = true;
+		if (move.hasEffectClass("ALLOW_STATUS"))
+			options.noStatus = false;
+		if (!(options.noTags && options.noStatus)) {
+			if (await CityRoll.verifyRequiredInfo(moveId, actor)) {
+				const dialogReturn = await RollDialog.create(this, moveId, actor);
+				if (!dialogReturn)
+					return;
+				let {modList, options} = dialogReturn;
+
+					this.#selectedList = modList;
+					this.#options = {...options,
+						...this.#options};
+				}
 		}
 		return await this.execRoll();
 	}
@@ -105,8 +114,12 @@ export class CityRoll {
 				&& CityHelpers.getOwner(x.ownerId, x.tokenId).getTag(x.tagId) //filter out deleted tags
 			);
 			if (options.burnTag && options.burnTag.length) {
-				tags = tags.filter(x => x.tagId == options.burnTag);
-				tags[0].amount = 3;
+				if (!CitySettings.isOtherscapeBurn()) {
+					tags = tags.filter(x => x.tagId == options.burnTag);
+					tags[0].amount = 3;
+				} else {
+					tags.find(x=> x.tagId == options.burnTag).amount = 3;
+				}
 			}
 		}
 		let usedStatus = [];
@@ -144,6 +157,17 @@ export class CityRoll {
 				id: "Mythos",
 				name: localize("CityOfMist.terms.mythosThemes"),
 				amount: actor.getNumberOfThemes("Mythos"),
+				ownerId: null,
+				tagId: null,
+				type: "modifier",
+				strikeout: false,
+			});
+		}
+		if (options.mistRoll) {
+			modifiers.push({
+				id: "Mist",
+				name: localize("CityOfMist.terms.mistThemes"),
+				amount: actor.getNumberOfThemes("Mist"),
 				ownerId: null,
 				tagId: null,
 				type: "modifier",
@@ -267,14 +291,13 @@ export class CityRoll {
 		return { total: bonus + roll.total, roll_adjustment};
 	}
 
-	static getRollBonus(rollOptions, modifiers= rollOptions.modifiers ) {
+	static getRollBonus(rollOptions, modifiers= rollOptions.modifiers, misc_mod = 0 ) {
 		const {power} = CityRoll.getRollPower(rollOptions, modifiers);
 		const rollCap = CityHelpers.getRollCap();
-		const capped = Math.min(rollCap, power);
+		const capped = Math.min(rollCap, power + misc_mod);
 		const roll_adjustment = capped - power;
 		return { bonus: capped, roll_adjustment };
 	}
-
 
 	static getRollPower (rollOptions, modifiers= rollOptions.modifiers) {
 		const validModifiers = modifiers.filter(x => !x.strikeout);
@@ -315,7 +338,13 @@ export class CityRoll {
 		}
 	}
 
-		static calculatePenalty(effectBonus) {
+	/** Calculates penalty for alt-power rule attack to penalty slider*/
+	static calculatePenalty(effectBonus) {
+		//test code for now to do somet balance testing on this eventually will require a switch to choose
+		return this.calculatePenalty_linear(effectBonus);
+	}
+
+	static calculatePenalty_sloped(effectBonus) {
 			switch (effectBonus) {
 				case 0: return 0;
 				case 1: return -1;
@@ -325,7 +354,19 @@ export class CityRoll {
 				case 5: return -9;
 				default: return 0;
 			}
-		}
+	}
+
+	static calculatePenalty_linear(effectBonus) {
+			switch (effectBonus) {
+				case 0: return 0;
+				case 1: return -1;
+				case 2: return -2;
+				case 3: return -3;
+				case 4: return -4;
+				case 5: return -5;
+				default: return 0;
+			}
+	}
 
 	static calculateGritPenalty(standardPower) {
 		if (CitySettings.isGritMode()) {
@@ -421,7 +462,7 @@ export class CityRoll {
 		const tags = this.#tags;
 		const options = this.#options;
 		if (options.burnTag && options.burnTag.length)
-			for (const {ownerId, tagId, tokenId} of tags)
+			for (const {ownerId, tagId, tokenId} of tags.filter( x=> x.tagId == options.burnTag))
 				await CityHelpers.getOwner(ownerId, tokenId)?.burnTag(tagId);
 		if (!CitySettings.burnTemporaryTags())
 			return;
@@ -491,16 +532,39 @@ export class CityRoll {
 		});
 	}
 
+	async mistRoll () {
+		mergeObject(this.#options, {
+			noTags: true,
+			noStatus: true,
+			mistRoll: true,
+			setRoll: 0
+		});
+	}
+
 	async SHBRoll (_move_id, _actor, type = "Logos") {
 		const rollOptions = {
 			noTags: true,
 			noStatus: true,
 			logosRoll: true,
+			mythosRoll: false,
+			mistRoll: false,
 			setRoll: 0
 		};
-		if (type == "Mythos") {
-			rollOptions.logosRoll = false;
-			rollOptions.mythosRoll = true;
+		switch (type) {
+			case "Mythos":
+				rollOptions.logosRoll = false;
+				rollOptions.mythosRoll = true;
+				rollOptions.mistRoll = false;
+				break;
+			case "Logos":
+				break;
+			case "Mist":
+				rollOptions.logosRoll = false;
+				rollOptions.mythosRoll = false;
+				rollOptions.mistRoll = true;
+				break;
+			default:
+				throw new Error(`Unknown SHB type : ${type}`);
 		}
 		mergeObject(this.#options, rollOptions);
 	}

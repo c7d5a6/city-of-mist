@@ -202,11 +202,31 @@ export const registerSystemSettings = function() {
 		hint: localize("CityOfMist.settings.clueBoxes.hint"),
 		scope: "world",
 		config: true,
-		type: Boolean,
-		default: true,
+		type: String,
+		choices: {
+			"none" : localize("CityOfMist.settings.clueBoxes.0"),
+			"whisper": localize("CityOfMist.settings.clueBoxes.1"),
+			"public":localize("CityOfMist.settings.clueBoxes.2"),
+		},
+		default: "public",
 		restrict: true,
 		onChange: _ =>	delayedReload()
 
+	});
+
+	game.settings.register("city-of-mist", "gmmoveheaders", {
+		name: localize("CityOfMist.settings.gmmoveheaders.name"),
+		hint: localize("CityOfMist.settings.gmmoveheaders.hint"),
+		scope: "world",
+		config: true,
+		type: String,
+		default: "none",
+		choices: {
+			"none" : localize("CityOfMist.settings.gmmoveheaders.choice0"),
+			"symbols": localize("CityOfMist.settings.gmmoveheaders.choice1"),
+			"text": localize("CityOfMist.settings.gmmoveheaders.choice2")
+		},
+		restrict: true,
 	});
 
 	game.settings.register("city-of-mist", "tagReview", {
@@ -225,7 +245,7 @@ export const registerSystemSettings = function() {
 		scope: "world",
 		config: true,
 		type: String,
-		default: "all",
+		default: "full",
 		choices: {
 			"none" : localize("CityOfMist.settings.sceneTagWindow.choice0"),
 			"omitEmpty": localize("CityOfMist.settings.sceneTagWindow.choice1"),
@@ -233,6 +253,23 @@ export const registerSystemSettings = function() {
 		},
 		restrict: true,
 		onChange: _ => delayedReload()
+	});
+
+	game.settings.register("city-of-mist", "sceneTagWindowPos", {
+		name: localize("CityOfMist.settings.sceneTagWindowPosition.name"),
+		hint: localize("CityOfMist.settings.sceneTagWindowPosition.hint"),
+		//NOTE: FOR SOME REASON scop wil not shift to client
+		scope: "world",
+		config: true,
+		type: String,
+		default: "left",
+		requiresReload: true,
+		restricted: true,
+		choices: {
+			"left" : localize("CityOfMist.settings.sceneTagWindowPosition.choice0"),
+			"right": localize("CityOfMist.settings.sceneTagWindowPosition.choice1"),
+			"hide": localize("CityOfMist.settings.sceneTagWindowPosition.choice2")
+		},
 	});
 
 	game.settings.register("city-of-mist", "handleTempItems", {
@@ -249,7 +286,6 @@ export const registerSystemSettings = function() {
 		},
 		restrict: true,
 	});
-
 
 	game.settings.register("city-of-mist", "devMode", {
 		name: localize("CityOfMist.settings.devMode.name"),
@@ -315,10 +351,12 @@ export const registerSystemSettings = function() {
 		choices: {
 			"classic" : localize("CityOfMist.settings.statusAdditionSystem.0"),
 			"classic-commutative": localize("CityOfMist.settings.statusAdditionSystem.1"),
-			"reloaded": localize("CityOfMist.settings.statusAdditionSystem.2")
+			"reloaded": localize("CityOfMist.settings.statusAdditionSystem.2"),
+			"otherscape": localize("CityOfMist.settings.statusAdditionSystem.3"),
+
 		},
 		restrict: true,
-		onChange: _ => {
+		onChange: newval => {
 			game.settings.set('city-of-mist', "system", "custom");
 		}
 	});
@@ -332,9 +370,26 @@ export const registerSystemSettings = function() {
 		default: "classic",
 		choices: {
 			"classic" : localize("CityOfMist.settings.statusSubtractionSystem.0"),
-			"reloaded": localize("CityOfMist.settings.statusSubtractionSystem.1")
+			"reloaded": localize("CityOfMist.settings.statusSubtractionSystem.1"),
+			"otherscape": localize("CityOfMist.settings.statusSubtractionSystem.2"),
 		},
 		restrict: true,
+		onChange: _ => {
+			game.settings.set('city-of-mist', "system", "custom");
+		}
+	});
+
+	game.settings.register("city-of-mist", "tagBurn", {
+		name: localize("CityOfMist.settings.tagBurn.name"),
+		hint: localize("CityOfMist.settings.tagBurn.hint"),
+		scope: "world",
+		config: (game.settings.get('city-of-mist', "system") == "custom"),
+		type: String,
+		default: "classic",
+		choices: {
+			"classic" : localize("CityOfMist.settings.tagBurn.0"),
+			"otherscape": localize("CityOfMist.settings.tagBurn.1"),
+		},
 		onChange: _ => {
 			game.settings.set('city-of-mist', "system", "custom");
 		}
@@ -401,11 +456,46 @@ export class CitySettings {
 	static getWeaknessCap() {
 		return this.get("weaknessCap") ?? 999;
 	}
-
-	static useClueBoxes() {
-		return this.get("clueBoxes") ?? true;
+	static isOtherscapeStatuses() {
+		return this.get("statusAdditionSystem") == "otherscape";
 	}
 
+	static isOtherscapeBurn() {
+		return this.get("tagBurn") == "otherscape";
+
+	}
+
+	static useClueBoxes() {
+		switch (this.get("clueBoxes")) {
+			case false: return false;
+			case "none": return false;
+			default: return true;
+		}
+		// return this.get("clueBoxes") ?? true;
+	}
+
+	static whisperClues() {
+		switch (this.get("clueBoxes")) {
+			case "whisper": return true;
+			default: return false;
+		}
+	}
+
+	static sceneTagWindowPosition() {
+		return this.get("sceneTagWindowPos");
+	}
+
+	static sceneTagWindowUsed() {
+		switch(this.get("sceneTagWindow" )) {
+			case "none": return false;
+			default: return true;
+		}
+	}
+
+	/** returns "text", "symbols" or "none" */
+	static GMMoveHeaderSetting() {
+		return this.get("gmmoveheaders");
+	}
 
 	/**
 	@return {boolean} if the proper CoM setting si on to atuto award improvements for more than 1 weakness tag
@@ -428,6 +518,7 @@ export class CitySettings {
 				game.settings.set("city-of-mist", "movesInclude_advanced", "classic");
 				game.settings.set("city-of-mist", "statusAdditionSystem", "classic");
 				game.settings.set("city-of-mist", "statusSubtractionSystem", "classic");
+				game.settings.set("city-of-mist", "tagBurn", "classic");
 				game.settings.set("city-of-mist", "altPower", false);
 				game.settings.set("city-of-mist", "system", "classic");
 				return;
@@ -435,10 +526,15 @@ export class CitySettings {
 				game.settings.set("city-of-mist", "movesInclude_core", "reloaded");
 				game.settings.set("city-of-mist", "movesInclude_advanced", "none");
 				game.settings.set("city-of-mist", "statusAdditionSystem", "reloaded");
+				game.settings.set("city-of-mist", "tagBurn", "classic");
 				game.settings.set("city-of-mist", "statusSubtractionSystem", "reloaded");
 				game.settings.set("city-of-mist", "altPower", false);
 				game.settings.set("city-of-mist", "system", "reloaded");
 				return;
+			case "otherscape" :
+				//TODO: Add this as a formal option
+
+				break;
 			case "custom":
 				return;
 			default:
@@ -462,3 +558,5 @@ function delayedReload() {
 
 // Example Getter
 // game.settings.get('city-of-mist', "weaknessCap");
+
+

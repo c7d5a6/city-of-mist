@@ -357,8 +357,15 @@ export class CityActor extends Actor {
 		await this.update({token: {name}});
 	}
 
-	async deleteTheme(themeId) {
+	async deleteTheme(themeId, awardBU = true) {
 		const theme = this.getTheme(themeId);
+		if (awardBU) {
+			const BUV = theme.getBuildUpValue();
+			const BUImpGained = await this.incBuildUp(BUV);
+			await theme.destroyThemeMessage(BUImpGained);
+		} else {
+			await CityHelpers.modificationLog(this, `Theme Deleted`, theme);
+		}
 		if (theme.usesThemeKit())
 			await this.deleteThemeKit(theme.themebook.id);
 		await this.deleteEmbeddedById(themeId);
@@ -438,8 +445,6 @@ export class CityActor extends Actor {
 	}
 
 	async createNewStatus (name, tier=1, pips=0, options= {}) {
-		// Debug(name);
-		// Debug(options);
 		const temporary  = options.temporary ?? false;
 		const permanent  = options.permanent ?? false;
 		const obj = {
@@ -854,16 +859,31 @@ export class CityActor extends Actor {
 
 	async addFade(themeId, amount=1) {
 		const theme= await this.getTheme(themeId);
+		if (theme.crack == 2) {
+			if (! await CityHelpers.confirmBox(
+				localize("CityOfMist.dialog.actorSheet.addFade.title"),
+				localize("CityOfMist.dialog.actorSheet.addFade.body")
+			)) return false;
+		}
 		const theme_destroyed = await theme.addFade(amount);
 		if (theme_destroyed) {
-			await this.deleteTheme(themeId);
+			await this.deleteTheme(themeId, true);
 		}
+		let txt =`Crack/Fade added to ${theme.displayedName}`
+		if (theme_destroyed)
+			txt += " ---- Theme Destroyed!";
+		else
+			txt += ` (Current ${await theme.getCrack()})`;
+		await CityHelpers.modificationLog(this, txt);
 		return theme_destroyed;
 	}
 
 	async removeFade (themeId, amount=1) {
 		const theme= await this.getTheme(themeId);
 		await theme.removeFade(amount);
+		let txt =`${actor.name}: Crack/Fade removed from ${themeName}`
+		txt += ` (Current ${await theme.getCrack()})`;
+		await CityHelpers.modificationLog(this, txt);
 		return false;
 	}
 
@@ -1082,33 +1102,11 @@ export class CityActor extends Actor {
 		}
 	}
 
-	async executeGMMove (move) {
+	async executeGMMove (move, actor = undefined) {
 		const {taglist, statuslist, html, options} = await move.prepareToRenderGMMove(this);
-		if (await CityHelpers.sendToChat(html, options)) {
-			for (const {name : tagname, options} of taglist) {
-				await this._processMoveTag(tagname.trim(), options);
-			}
-			for (const {name, tier, options} of statuslist)
-				await this._processMoveStatus(name, tier, options);
-		}
-	}
-
-	async _processMoveTag(tagname, options) {
-		if (!options.scene)
-			await this.createStoryTag(tagname.trim(), true, options);
-		else
-			await SceneTags.createSceneTag(tagname.trim(), true, options);
-	}
-
-	async _processMoveStatus(name, tier, options) {
-		//TODO: convert options to object with false /true
-		if (options.scene) {
-			await SceneTags.createSceneStatus(name.trim(), tier,0, options);
-			return;
-		}
-		if (options.autoApply) {
-				await this.addOrCreateStatus(name.trim(), tier, 0, options);
-			return;
+		const speaker = actor ? { alias: actor.getDisplayedName() } : {};
+		if (await CityHelpers.sendToChat(html, speaker)) {
+			await CityHelpers.processTextTagsStatuses(taglist, statuslist, this);
 		}
 	}
 
@@ -1166,6 +1164,33 @@ export class CityActor extends Actor {
 
 	async onDowntime() {
 		//placeholder may use later
+	}
+
+	canUseMove(move) {
+		const type = move.system.type;
+		switch (type) {
+			case "mistroll":
+				if(this.getNumberOfThemes("Mist") <= 0) return false;
+				break;
+			case "mythosroll":
+				if(this.getNumberOfThemes("Mythos") <= 0) return false;
+				break;
+			case "logosroll":
+				if( this.getNumberOfThemes("Logos") <= 0) return false;
+				break;
+			case "noroll":
+			case "standard":
+				break;
+			default:
+				throw new Error(`Unknown Move Type ${type}`);
+		}
+		if (move.system.abbreviation == "FLASH" && !this.hasFlashbackAvailable())
+			return false;
+			if (move.hasEffectClass("MIST") && this.getNumberOfThemes("Mist") <=0)
+			return false;
+			if (move.hasEffectClass("MYTHOS") && this.getNumberOfThemes("Mythos") <=0)
+			return false;
+		return true;
 	}
 
 } //end of class

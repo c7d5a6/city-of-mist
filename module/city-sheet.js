@@ -1,6 +1,7 @@
 import { HTMLTools } from "./tools/HTMLTools.mjs";
 import { CityDB } from "./city-db.mjs";
 import {CityDialogs} from "./city-dialogs.mjs";
+import { DragAndDrop } from "./dragAndDrop.mjs";
 
 export class CitySheet extends ActorSheet {
 
@@ -27,8 +28,7 @@ export class CitySheet extends ActorSheet {
 		html.find('.sheet-lock-button').click(this._toggleLockState.bind(this));
 		html.find('.alias-toggle').click(this._aliasToggle.bind(this));
 		html.scroll(this._scrollSheet.bind(this));
-		html.find('.draggable').on("dragstart", this._dragStart.bind(this));
-		html.find('.draggable').on("dragend", this._dragEnd.bind(this));
+		DragAndDrop.addDragFunctionality( html);
 		html.on("drop", this._dragDropEvent.bind(this));
 
 		//Restore Scroll positon
@@ -88,15 +88,15 @@ export class CitySheet extends ActorSheet {
 				content: `Destroy ${themename}`,
 				buttons: {
 					one: {
-						label: "Just Delete",
+						label: localize("CityOfMist.dialog.actorSheet.deleteTheme.option.0"),
 						callback: () => conf("delete")
 					},
 					two: {
-						label: "Replace (award build-up)",
+						label: localize("CityOfMist.dialog.actorSheet.deleteTheme.option.1"),
 						callback: () => conf("replace")
 					},
 					cancel: {
-						label: "Cancel",
+						label: localize("CityOfMist.dialog.actorSheet.deleteTheme.option.2"),
 						callback: () => conf (null)
 					}
 				},
@@ -114,46 +114,14 @@ export class CitySheet extends ActorSheet {
 		return await HTMLTools.singleChoiceBox(list, headerText);
 	}
 
-	async _dragStart (event) {
-		return await CityHelpers.dragStart(event);
-	}
-
-	async _dragEnd (event) {
-		return await CityHelpers.dragEnd(event);
-	}
-
 	async _dragDropEvent (_event) {
 		const dragging = $(document).find(".dragging");
 		if (dragging.length != 1) {
 			console.warn ("Something went wrong with dragging");
 			return;
 		}
-		const type = dragging.data("draggableType");
-		switch (type) {
-			case "status" :
-				const str = dragging.text();
-				const protostatus = await CityHelpers.parseStatusString(str);
-				const status = await this.statusDrop(protostatus);
-				break;
-			case "gmmove":
-				const move_id= dragging.data("moveId");
-				const owner_id = dragging.data("ownerId");
-				if (owner_id == this.actor.id)
-					return; // can't add a move on actor that already has it
-				const owner = CityDB.getActorById(owner_id);
-				const move = await owner.getGMMove(move_id);
-				if (!move)
-					throw new Error(`Couldn't find move Id ${move_id} in ${owner_id}`);
-				await this.actor.createNewGMMove(move.name, move.system);
-				//TODO: make draggable GM moves
-				break;
-			case "threat":
-
-				break;
-
-			default:
-				console.warn(`Unknwon Type ${type}`);
-		}
+		const actor= this.actor;
+		DragAndDrop.dropDraggableOnActor(dragging, actor);
 	}
 
 

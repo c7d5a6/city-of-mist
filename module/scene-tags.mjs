@@ -11,15 +11,29 @@ export class SceneTags {
 			this.sceneContainers.set( scene.id, container);
 		});
 		await Promise.all(promises);
+		const validcontainers = Array.from(this.sceneContainers.values());
+		const invContainers = game.actors.filter( x=> x.name == SceneTags.SCENE_CONTAINER_ACTOR_NAME && x.type == "threat" && !validcontainers.includes(x));
+		if (invContainers.length) {
+			invContainers.forEach( x=> x.delete());
+			console.log("Deleting invalid containers");
+		}
+
 		// this.sceneContainer = await this.#getSceneContainer();
 	}
 
 	static async #getSceneContainer(scene) {
 		if (!scene)
 			throw new Error("No scene Provided");
-		const cont = game.actors.find( x=> x.name == SceneTags.SCENE_CONTAINER_ACTOR_NAME && x.type == "threat" && x.system.mythos == scene.id);
-		if (cont)
+		const cont = game.actors.find( x=> x.name == SceneTags.SCENE_CONTAINER_ACTOR_NAME && x.type == "threat" && (x.system.mythos == scene.id || x.system.alias == scene.id));
+		if (cont) {
+			if (cont?.system?.mythos && (!cont.system.alias || cont.system.alias == "?????")) {
+				const alias = cont.system.mythos
+				await cont.update({"system.alias": alias,
+					"system.mythos": ""
+				});
+			}
 			return cont;
+		}
 		if (!game.user.isGM) {
 			await CityHelpers.sleep(50);
 			return await this.#getSceneContainer(scene);
@@ -27,7 +41,7 @@ export class SceneTags {
 		const newContainer = await CityActor.create( {
 			name: SceneTags.SCENE_CONTAINER_ACTOR_NAME,
 			type: "threat",
-			system: { mythos: scene.id},
+			system: { alias: scene.id},
 		});
 		console.log(`Creating new container for ${scene.name}`);
 		return newContainer;
@@ -99,8 +113,6 @@ export class SceneTags {
 	static async createSceneStatus(name = "", tier = 1, pips=0, options= {}) {
 		if (!name)
 			return await this.#createSceneStatusInteractive();
-		Debug(name);
-		Debug(options);
 		const container = await this.#getSceneContainer(game.scenes.current);
 		const status = await container.addOrCreateStatus(name, tier, pips, options);
 		await status.update( {"data.sceneId": game.scenes.current.id});
@@ -124,7 +136,6 @@ export class SceneTags {
 		const item = await this.createSceneStatus("Unnamed Status", 1, 0);
 		const updateObj = await CityDialogs.itemEditDialog(item);
 		if (updateObj) {
-			Debug(updateObj);
 			CityHelpers.modificationLog(container, "Created", updateObj, `tier  ${updateObj.system.tier}`);
 		} else {
 			await container.deleteStatus(obj.id);

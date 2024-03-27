@@ -25,6 +25,8 @@ import { VersionUpdater } from "./version-update.mjs";
 import {} from "./city-handlebars-helpers.mjs";
 import {} from "./story-tag-window.mjs";
 import {CitySockets} from "./city-sockets.mjs";
+import {DragAndDrop} from "./dragAndDrop.mjs";
+import { CityKeyBinds } from "./keybindings.mjs";
 
 import {ClueChatCards } from "./clue-cards.mjs";
 
@@ -38,12 +40,13 @@ window.getClosestData = HTMLTools.getClosestData;
 
 Hooks.on('renderChatMessage', (app, html, data) => CityRoll.diceModListeners(app, html, data));
 Hooks.on('renderChatMessage', (app, html, data) => CityRoll.showEditButton(app, html, data));
-Hooks.on('renderChatMessage', (app, html, data) => CityHelpers.dragFunctionality(app, html, data));
+Hooks.on('renderChatMessage', (_app, html, _data) => DragAndDrop.addDragFunctionality(html));
 Hooks.on('renderChatMessage', (app, html, data) => ClueChatCards.clueEditButtonHandlers(app, html, data));
 Hooks.on('ready', () => {
 	CitySockets.init();
 	window.CitySockets = CitySockets;
 });
+
 
 Hooks.once("cityDBLoaded", async function() {
 	if (game.user.isGM) {
@@ -57,14 +60,15 @@ Hooks.once("cityDBLoaded", async function() {
 });
 
 
+
 Hooks.once("ready", _=> CityHelpers.cacheSounds());
 
 Hooks.once("init", async function() {
 	console.log(`***********************************`);
 	console.log(`Initializing City of Mist System`);
 	console.log(`***********************************`);
-
 	window.localize = game.i18n.localize.bind(game.i18n);
+
 
 	registerSystemSettings();
 
@@ -90,6 +94,17 @@ Hooks.once("init", async function() {
 	if (game.settings.get("city-of-mist", "enhancedActorDirectory"))
 		EnhancedActorDirectory.init();
 
+});
+
+//Support for TaragnorSecurity module if installed
+Hooks.on("encryptionPreEnable", (taragnorSec) => {
+	taragnorSec.setEncryptable(CityActor,
+		[CityCharacterSheet, CityThreatSheet, CityCrewSheet],
+		["system.gmnotes", "system.mythos"]);
+	taragnorSec.setEncryptable(CityItem,
+		[CityItemSheetLarge],
+		["system.description"]);
+	console.log("Taragnor Security: CoM Encryption support enabled");
 });
 
 /* City of Mist Status Tracker */

@@ -3,6 +3,7 @@ import {JuiceSpendingSessionM, JuiceMasterSession, TagReviewMasterSession} from 
 import {CityRoll} from "./city-roll.js";
 import {SelectedTagsAndStatus} from "./selected-tags.mjs";
 import {ReviewableModifierList} from "./ReviewableModifierList.mjs";
+import { CitySettings } from "./settings.js";
 
 export class RollDialog extends Dialog {
 	#juiceSession;
@@ -82,7 +83,7 @@ export class RollDialog extends Dialog {
 	}
 
 	_onKeyDown(event) {
-		console.log("Calling variant handler");
+		// console.log("Calling variant handler");
 		if ( event.key === "Enter"  && !this.allowSubmit()) {
 			event.preventDefault();
 			event.stopPropagation();
@@ -153,6 +154,7 @@ export class RollDialog extends Dialog {
 	}
 
 	setListeners(html) {
+		console.log("Setting listeners");
 		$(html).find("#effect-slider").change( (ev) => {
 			this.updateModifierPopup(html, ev);
 		});
@@ -227,6 +229,7 @@ export class RollDialog extends Dialog {
 		const templateHTML = await renderTemplate("systems/city-of-mist/templates/dialogs/roll-dialog.html", templateData);
 		this.html.empty();
 		this.html.html(templateHTML);
+		this.setListeners(this.html);
 		this.refreshConfirmButton();
 		this.updateModifierPopup();
 	}
@@ -303,7 +306,11 @@ export class RollDialog extends Dialog {
 		this.#options.modifier = Number($(html).find("#roll-modifier-amt").val());
 		this.#options.dynamiteAllowed= $(html).find("#roll-dynamite-allowed").prop("checked");
 		this.#options.burnTag = $(html).find("#roll-burn-tag option:selected").val() ?? "";
-		this.#options.setRoll = this.#options.burnTag.length ? 7 : 0;
+		if (!CitySettings.isOtherscapeBurn()) {
+			this.#options.setRoll = this.#options.burnTag.length ? 7 : 0;
+		} else {
+			this.#options.setRoll = 0;
+		}
 		const usedWeaknessTag = this.#modifierList.some( ({item}) =>item?.isWeaknessTag && item.isWeaknessTag());
 		if (this.#options.burnTag || usedWeaknessTag) {
 			$(html).find('#effect-slider').val(0);
@@ -314,7 +321,8 @@ export class RollDialog extends Dialog {
 		this.#options.powerModifier = Number(
 			$(html).find('#effect-slider').val() ?? 0
 		);
-		const {bonus} = CityRoll.getRollBonus(this.#options, this.#modifierList );
+		const slider_penalty = CityRoll.calculatePenalty(this.#options.powerModifier ?? 0);
+		const {bonus} = CityRoll.getRollBonus(this.#options, this.#modifierList, slider_penalty);
 		const {power} = CityRoll.getPower(this.#options, this.#modifierList);
 		$(html).find(".roll-bonus").text(String(bonus));
 		$(html).find(".move-effect").text(String(power));

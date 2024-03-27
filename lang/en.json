@@ -61,6 +61,7 @@
 "CityOfMist.terms.weaknessTags": "Weakness Tags",
 "CityOfMist.terms.storyTags": "Story Tags",
 "CityOfMist.terms.permanentStoryTag": "Permanent Story Tag",
+"CityOfMist.terms.default": "Default",
 "CityOfMist.terms.broadTag": "Broad Tag",
 "CityOfMist.terms.crispyTag": "Crispy Tag",
 "CityOfMist.terms.temporaryTag": "Temporary Tag",
@@ -106,6 +107,7 @@
 "CityOfMist.terms.customModifier": "Custom Modifier",
 "CityOfMist.terms.mythosThemes": "Mythos Themes",
 "CityOfMist.terms.logosThemes": "Logos Themes",
+"CityOfMist.terms.mistThemes": "Mist Themes",
 "CityOfMist.terms.biography": "Biography",
 "CityOfMist.terms.mc_notes": "MC Notes",
 "CityOfMist.terms.bu_points": "Build-Up Points",
@@ -121,6 +123,7 @@
 "CityOfMist.terms.noRoll": "No Roll",
 "CityOfMist.terms.logosRoll": "Logos Roll",
 "CityOfMist.terms.mythosRoll": "Mythos Roll",
+"CityOfMist.terms.mistRoll": "Mist Roll",
 "CityOfMist.terms.category": "Category",
 "CityOfMist.terms.advanced": "Advanced",
 "CityOfMist.terms.SHB": "Stop.Holding.Back",
@@ -269,6 +272,20 @@
 "CityOfMist.moves.sessionEnd.1": "Which character had the most meaningful interaction with your character this session? Add one Help point or one Hurt point next to their name on your character card.",
 "CityOfMist.moves.sessionEnd.2": "Which of your themes is under the most strain? If it collapses, what new aspect will show up in its place? Write down the answer under FLIPSIDE on that theme’s card.",
 
+"CityOfMist.moves.escapeFromMemory.name": "Escape From Memory",
+
+
+"CityOfMist.moves.performanceReview.name": "Performance Review",
+"CityOfMist.moves.performanceReview.always": "<p>When you receive credit from your superiors for successfully accomplishing a task given to you as a Directive, mark Attention on its theme. You may also mark Crack on one of your Logos themes to represent an upcoming promotion</p><br><p> When you are accused by your superiors of failing to accomplish a task given to you as a Directive or crossing a line defined by a Directive, mark 1 Strike on the Directive’s theme (2 Strikes if your transgression was especially severe, as chosen by your superiors).</p><br><p> When the Directive is resolved, or if your superiors elect to reassign you, choose an appropriate new Directive for this theme with the MC.</p>",
+
+"CityOfMist.moves.hardchoiceGK.name": "Make a Hard Choice (Gatekeeper)",
+"CityOfMist.moves.hardchoiceGK.always": "<p>When following your Directive demands you act or speak in a given way and you don’t, if it’s discovered, it will show up on your Performance Review.</p><br><p> When your Identity demands you act or speak in a given way and you don’t, mark Crack on that Identity’s theme.</p><br><p> When you sacrifice something you truly want in order to abide by your Identity, mark Attention on that Identity’s theme.</p>",
+
+"CityOfMist.moves.LBTM.name": "Look Behind the Mist",
+
+"CityOfMist.gmmove.hideName" : "Hide Move Name",
+"CityOfMist.gmmove.header" : "Move Header",
+
 "CityOfMist.reloaded.moves.stunt.name": "Stunt",
 "CityOfMist.reloaded.moves.stunt.partial": "You succeed, but the MC chooses a complication:",
 "CityOfMist.reloaded.moves.stunt.success": "You succeed",
@@ -377,6 +394,8 @@
 
 "CityOfMist.themekit.html.inherit_improvements_checkbox": "Include Improvements  from base themebook",
 
+"CityOfMist.chatmessage.clue.use":"uses a clue.",
+
 "CityOfMist.dialog.roll.waitForMC": "Waiting for MC approval",
 "CityOfMist.dialog.roll.title": "Make Roll",
 "CityOfMist.dialog.roll.rollBonus": "Roll Bonus:",
@@ -387,10 +406,29 @@
 "CityOfMist.dialog.roll.burnTag": "Burn Tag",
 "CityOfMist.dialog.roll.dontBurn": "Don't Burn",
 
+"CityOfMist.dialog.downtime.title": "Possible Downtime Moves",
+"CityOfMist.dialog.downtime.unburn": "Prepare for your next activity. Tell everyone at the table how you prepare. Unburn all burned tags",
+"CityOfMist.dialog.downtime.juice": "Prepare for your next activity. Tell everyone at the table how you prepare. Gain 3 Juice with a method based on your description. You can choose from the effect improvements under Change the Game.",
+
+"CityOfMist.dialog.downtimeconfirm.title": "Downtime Confirmation",
+"CityOfMist.dialog.downtimeconfirm.body": "Would you like to begin Downtime for all players?",
+
+
+"CityOfMist.dialog.pcdowntime.title": "Downtime For ",
+
 "CityOfMist.dialog.addTag.confirmExtraImprovementOnWeakness.title": "Grant Improvement?",
 "CityOfMist.dialog.addTag.confirmExtraImprovementOnWeakness.body": "Grant a free improvement for taking 2+ weakness tags on same theme?",
 "CityOfMist.dialog.deleteTag.confirmExtraImprovementOnWeakness.title": "Remove Imrovement?",
 "CityOfMist.dialog.deleteTag.confirmExtraImprovementOnWeakness.body": "Remove the free improvement for taking 2+ weakness tags on a theme?",
+
+"CityOfMist.dialog.actorSheet.deleteTheme.title": "Delete Theme",
+"CityOfMist.dialog.actorSheet.deleteTheme.body": "Delete Theme without adding Build-up points? This action can't be undone.",
+"CityOfMist.dialog.actorSheet.deleteTheme.option.0": "Just Delete",
+"CityOfMist.dialog.actorSheet.deleteTheme.option.1": "Replace (award build-up)",
+"CityOfMist.dialog.actorSheet.deleteTheme.option.2": "Cancel",
+
+"CityOfMist.dialog.actorSheet.addFade.title": "Confirm Add Fade/Crack",
+"CityOfMist.dialog.actorSheet.addFade.body": "This action will cause the theme to be destroyed (you will get build-up points). Are you sure?",
 
 "CityOfMist.dialog.themebook_select.themekit": "Use Theme Kit",
 
@@ -402,14 +440,15 @@
 "CityOfMist.dialog.SHB.warning0":"Are you sure you want to Stop.Holding.Back?",
 "CityOfMist.dialog.SHB.warning1":"The consequences could be DIRE!",
 "CityOfMist.dialog.SHB.source":"Source of your power",
-"CityOfMist.dialog.SHB.mythicpower":"Draw upon Mythic power (Default)",
+"CityOfMist.dialog.SHB.mythicpower":"Draw upon Mythic power (Rift)",
 "CityOfMist.dialog.SHB.logosPower":"Draw upon Logos power (Optional Rule)",
+"CityOfMist.dialog.SHB.mistPower":"Draw Upon the Mist (Gatekeeper)",
 "CityOfMist.dialog.SHB.yes":"Lets do this!",
 "CityOfMist.dialog.SHB.no":"Wait, I changed my mind",
 "CityOfMist.dialog.statusAdd.CoMClassic": "Choose status tier to add/subtract",
 "CityOfMist.dialog.statusAdd.CoMReloaded": "Choose number of boxes to add/subtract",
 "CityOfMist.dialog.statusDrop.CoMReloaded": "Choose number of boxes to subtract",
-"CityOfMist.dialog.downtime.query": "Execute Downtime?",
+"CityOfMist.dialog.downtime.query": "Choose Characters for Downtime",
 "CityOfMist.dialog.endOfSession.query": "Execute End of Session Move?",
 "CityOfMist.dialog.endOfSession.name": "End Of Session",
 
@@ -474,8 +513,22 @@
 "CityOfMist.settings.enhancedActorDirectory.hint": "Shows only the alias name to non-owners of an actor in the directory, hiding the true name from the players (requires browser refresh)",
 "CityOfMist.settings.clueBoxes.name": "Enhanced Clue System",
 "CityOfMist.settings.clueBoxes.hint": "Clues are spawned as separate interactive chat objects (clue boxes) that the player and GM can fill out.",
+"CityOfMist.settings.clueBoxes.0": "No clue boxes",
+"CityOfMist.settings.clueBoxes.1": "Whispered Clue Boxes",
+"CityOfMist.settings.clueBoxes.2": "Public Clue Boxes",
 "CityOfMist.settings.tagReview.name": "MC Tag Review",
 "CityOfMist.settings.tagReview.hint": "Before roll is made MC gets to review what tags and statuses are included.",
+
+"CityOfMist.settings.gmmoveheaders.name": "Danger Move starting text",
+"CityOfMist.settings.gmmoveheaders.hint": "Automatically Apply an identifier to the start of each danger's move based on its type (soft, hard, etc)",
+"CityOfMist.settings.gmmoveheaders.choice0": "None",
+"CityOfMist.settings.gmmoveheaders.choice1": "Symbols",
+"CityOfMist.settings.gmmoveheaders.choice2": "Text",
+"CityOfMist.settings.gmmoveheaders.soft": "As a soft move, $name",
+"CityOfMist.settings.gmmoveheaders.hard": "As a hard move, $name",
+"CityOfMist.settings.gmmoveheaders.intrusion": "As an intrusion, $name",
+"CityOfMist.settings.gmmoveheaders.downtime": "During downtime, $name",
+"CityOfMist.settings.gmmoveheaders.entrance": "When $name enters the scene,",
 
 "CityOfMist.settings.sceneTagWindow.name": "Scene Tags",
 "CityOfMist.settings.sceneTagWindow.hint": "Displays scene tags and statuses on the main screen (may cause screen clutter)",
@@ -483,6 +536,11 @@
 "CityOfMist.settings.sceneTagWindow.choice1": "Include combatants with at least one tag or status",
 "CityOfMist.settings.sceneTagWindow.choice2": "Include all combatants on combat tracker",
 
+"CityOfMist.settings.sceneTagWindowPosition.name": "Scene Tags",
+"CityOfMist.settings.sceneTagWindowPosition.hint": "Position on screen that the Scene Tag Window will appear",
+"CityOfMist.settings.sceneTagWindowPosition.choice0": "Left",
+"CityOfMist.settings.sceneTagWindowPosition.choice1": "Right",
+"CityOfMist.settings.sceneTagWindowPosition.choice2": "Hide",
 
 "CityOfMist.settings.devMode.name": "Developer Mode",
 "CityOfMist.settings.devMode.hint": "Exposes various internal variables of the system (advanced use only).",
@@ -492,7 +550,8 @@
 "CityOfMist.settings.statusAdditionSystem.hint": "Choose which system to use when adding statuses",
 "CityOfMist.settings.statusAdditionSystem.0": "Classic CoM Addition",
 "CityOfMist.settings.statusAdditionSystem.1": "Tier-based Commutative",
-"CityOfMist.settings.statusAdditionSystem.2": "CoM Reloaded (Boxes)",
+"CityOfMist.settings.statusAdditionSystem.2": "CoM Reloaded original (Boxes)",
+"CityOfMist.settings.statusAdditionSystem.3": "Otherscape (no pips)",
 "CityOfMist.settings.statusSubtractionSystem.name": "Status Subtraction",
 "CityOfMist.settings.statusSubtractionSystem.hint": "Choose which system to use when subtracting statuses",
 
@@ -501,11 +560,17 @@
 
 "CityOfMist.settings.statusSubtractionSystem.0": "Classic CoM Subtraction",
 "CityOfMist.settings.statusSubtractionSystem.1": "CoM Reloaded (Boxes)",
+"CityOfMist.settings.statusSubtractionSystem.2": "Otherscape (no pips)",
 "CityOfMist.settings.system.name": "Game System",
 "CityOfMist.settings.system.hint": "Choose version of CoM system",
 "CityOfMist.settings.system.0": "CoM Classic",
 "CityOfMist.settings.system.1": "CoM Reloaded",
 "CityOfMist.settings.system.2": "Custom",
+
+"CityOfMist.settings.tagBurn.name": "Tag Burning Mechanic",
+"CityOfMist.settings.tagBurn.hint": "Handles the effects of burning tags are burned in the system",
+"CityOfMist.settings.tagBurn.0": "Classic CoM system",
+"CityOfMist.settings.tagBurn.1": "Otherscape system (+3 bonus without fixed roll)",
 
 "CityOfMist.settings.debugMode.name": "Debug Mode",
 "CityOfMist.settings.debugMode.hint": "Turns on internal Javascript debug code",
@@ -516,8 +581,18 @@
 "CityOfMist.settings.handleTempItems.choice1": "Burn temporary or crispy tags",
 "CityOfMist.settings.handleTempItems.choice2": "Burn Temporary and crispy tags and delete statuses",
 
+"CityOfMist.keybinds.narration.name" : "Narration Box",
+"CityOfMist.keybinds.narration.help" :"Used for Narrating scenes (has special tag and status synatx similar to GM moves)",
+"CityOfMist.keybinds.sessionEnd.name" : "Session End",
+"CityOfMist.keybinds.sessionEnd.help" :"Initiates the End of Session Move for all players, refreshing Flashbacks and other session-based resources.",
+
+"CityOfMist.keybinds.startDowntime.name" : "Start Downtime",
+"CityOfMist.keybinds.startDowntime.help" :"Triggers downtime choices for all players and allows the MC to select from downtime moves of visible and invisible tokens actors on current scene",
+
 "CityOfMist.tooltip.createStory": "Create Story Tag",
 "CityOfMist.tooltip.createStatus": "Create New Status",
+"CityOfMist.tooltip.toggleTokenInStoryTagWindow": "Add/remove token from Scene Tag window.",
+"CityOfMist.tooltip.removeFromStoryTagWindow": "Remove from Scene Tag Window",
 
 "CityOfMist.tooltip.gmmove": "Use [] around a word to make a status or tag. &#013;[a:name] will make a status auto-applied when the move is triggered. &#013;[i:name] will ignore collective bonus.&#013; [a,i:name] will do both.&#013; [s:name] will add the used status or tag to the scene tags/statuses. Using {} around a block of text will make it visible only to the GM. That text will not post to chat.&#013 Other Commands: &#013 &#013 t: make status temporary, &#013 p: permanent make tag permanent",
 "CityOfMist.tooltip.error.missingParent": "ERROR: This tag needs to be a sub-tag of another tag.",
@@ -530,5 +605,6 @@
 "CityOfMist.error.MCEditOnly" : "Only MC may edit this.",
 
 "CityOfMist.notification.reloadRequired" : "Browser Window will reload shortly for all players due to setting change"
+
 
 }

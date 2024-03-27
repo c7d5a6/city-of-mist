@@ -82,13 +82,6 @@ export class CityActorSheet extends CitySheet {
 		// this.testHandlers(html);
 	}
 
-	testHandlers(html) {
-		console.log("*************************");
-		console.log("Test Handlers enabled!");
-		console.log("*************************");
-		html.find('.theme-text').click(this._destructionTest.bind(this));
-	}
-
 	async getData() {
 		let data = await super.getData();
 		data.storyTags = this.getStoryTags();
@@ -170,7 +163,6 @@ export class CityActorSheet extends CitySheet {
 		const owner = await this.getOwner(ownerId);
 		const themeId = getClosestData(event, "themeId");
 		const itemtype = getClosestData(event, "itemType");
-		Debug(owner);
 		const theme = owner.getTheme(themeId);
 		const subtype = getClosestData(event, "subType", null);
 		let idChoice;
@@ -262,7 +254,7 @@ export class CityActorSheet extends CitySheet {
 		const themeName = theme.name;
 		if (actor.isNewCharacter()) {
 			if (await this.confirmBox("Confirm Delete", `Delete Theme ${themeName}`)) {
-				await	actor.deleteTheme(themeId);
+				await	actor.deleteTheme(themeId, false);
 				await CityHelpers.modificationLog(actor, "Deleted", theme);
 			}
 		} else {
@@ -270,22 +262,20 @@ export class CityActorSheet extends CitySheet {
 			if (ret = await this.themeDeleteChoicePrompt(themeName)) {
 				switch (ret) {
 					case "replace":
-						const BUV = theme.getBuildUpValue();
-						const imp = await this.actor.incBuildUp(BUV);
-						await CityLogger.rawHTMLLog(this.actor, await theme.printDestructionManifest(imp));
-						await	actor.deleteTheme(themeId);
-						// await CityHelpers.modificationLog(actor, "Deleted", theme);
+						await	actor.deleteTheme(themeId, true);
 						break;
 					case "delete":
-						await	actor.deleteTheme(themeId);
-						await CityHelpers.modificationLog(actor, "Deleted", theme);
-						break;
-					default:
-						return true;
+
+						if (await this.confirmBox(localize("CityOfMist.dialog.actorSheet.deleteTheme.title"), localize("CityOfMist.dialog.actorSheet.deleteTheme.title"))) {
+							await	actor.deleteTheme(themeId, false);
+						}
+							break;
+							default:
+							return true;
+						}
 				}
 			}
 		}
-	}
 
 	async _burnTag (event) {
 		await HTMLHandlers.burnTag(event);
@@ -304,40 +294,14 @@ export class CityActorSheet extends CitySheet {
 		const themeName = theme.name;
 		switch (type) {
 			case "attention":
-				if (await this.confirmBox("Add Attention", `Add Attention to ${themeName}`)) {
-					await actor.addAttention(id);
-					await CityHelpers.modificationLog(actor, `Attention Gained `, theme, `Current ${await theme.getAttention()}`);
-				}
+				await actor.addAttention(id);
 				break;
 			case "crack":
-				if (await this.confirmBox("Add Fade/Crack", `Add Fade/Crack to ${themeName}`)) {
-					const theme_destroyed = await actor.addFade(id);
-					let txt =`Crack/Fade added to ${themeName}`
-					if (theme_destroyed)
-						txt += " ---- Theme Destroyed!";
-					else
-						txt += ` (Current ${await theme.getCrack()})`;
-					await CityHelpers.modificationLog(actor, txt);
-					if (theme_destroyed)  {
-						const BUV = theme.getBuildUpValue();
-						const imp = await this.actor.incBuildUp(BUV);
-
-						await CityLogger.rawHTMLLog(this.actor, await theme.printDestructionManifest(imp));
-					}
-				}
+				await actor.addFade(id);
 				break;
 			default:
 				throw new Error(`Unrecognized Type ${type}`);
 		}
-	}
-
-	async _destructionTest (event) {
-		console.log("Destruction Test");
-		const id = getClosestData( event, "themeId");
-		const actorId = getClosestData(event, "ownerId");
-		const actor = await this.getOwner(actorId);
-		const theme = await actor.getTheme(id);
-		await CityHelpers.modificationLog(this.actor, await theme.printDestructionManifest(0));
 	}
 
 	async _removeAttentionOrFade (event) {
@@ -349,22 +313,10 @@ export class CityActorSheet extends CitySheet {
 		const themeName = theme.name;
 		switch (type) {
 			case "attention":
-				if (await this.confirmBox("Remove Attention", `Remove Attention from ${themeName}`)) {
-					await actor.removeAttention(id);
-					await CityHelpers.modificationLog(actor,  `Attention removed`, theme, `Current ${await theme.getAttention()}`);
-					// CityHelpers.modificationLog(`${actor.name}: Attention removed to ${themeName} (Current ${await theme.getAttention()})`);
-				}
+				await actor.removeAttention(id);
 				break;
 			case "crack":
-				if (await this.confirmBox("Remove Fade/Crack", `Remove Fade/Crack to ${themeName}`)) {
-					const theme_destroyed = await actor.removeFade(id);
-					let txt =`${actor.name}: Crack/Fade removed from ${themeName}`
-					if (theme_destroyed)
-						txt += " ---- Theme Destroyed!";
-					else
-						txt += ` (Current ${await theme.getCrack()})`;
-					CityHelpers.modificationLog(actor, txt);
-				}
+				await actor.removeFade(id);
 				break;
 			default:
 				throw new Error(`Unrecognized Type ${type}`);
@@ -380,7 +332,6 @@ export class CityActorSheet extends CitySheet {
 		if (await this.confirmBox("Reset Fade", `spend an improvement to reset Fade/Crack on theme: ${themename}`)) {
 			actor.resetFade(id);
 			await CityHelpers.modificationLog(actor, `Spent Theme Upgrade to Reset Fade`, theme);
-			// CityHelpers.modificationLog(`${this.actor.name}: Spent Theme Upgrade to Reset Fade for ${themename}`);
 		}
 	}
 
@@ -711,7 +662,7 @@ export class CityActorSheet extends CitySheet {
 		const SHB = move_group == "SHB";
 		let newtype = null;
 		if (SHB) {
-			const SHBType = await this.SHBDialog();
+			const SHBType = await this.SHBDialog(this.actor);
 			if (!SHBType)
 				return;
 			newtype = SHBType;
@@ -757,20 +708,9 @@ export class CityActorSheet extends CitySheet {
 		return await CityHelpers.itemDialog(obj);
 	}
 
-	// async statusAddDialog(status) {
-	// 	const title = `Add Tier to Status`;
-	// 	return await CityHelpers._statusAddSubDialog(status, title, "addition");
-	// }
-
-	// async statusSubtractDialog(status) {
-	// 	const title = `Subtract Tier to Status`;
-	// 	return await CityHelpers._statusAddSubDialog(status, title, "subtraction");
-	// }
-
-
-	async SHBDialog () {
+	async SHBDialog (actor) {
 		const title = "You sure about this?";
-		const html = await renderTemplate("systems/city-of-mist/templates/dialogs/SHB-dialog.html", {});
+		const html = await renderTemplate("systems/city-of-mist/templates/dialogs/SHB-dialog.html", {actor});
 		return new Promise ( (conf, rej) => {
 			const options = {};
 			const dialog = new Dialog({

@@ -6,6 +6,8 @@ import {SceneTags} from "./scene-tags.mjs";
 import {HTMLTools} from "./tools/HTMLTools.mjs";
 import {TagReviewDialog} from "./dialogs/tag-review.mjs";
 
+const PATH = "systems/city-of-mist";
+
 export class CityDialogs {
 
 	/** brings up a confirmation window
@@ -159,11 +161,11 @@ export class CityDialogs {
 				return el.selectionStart;
 			} else if (document.selection) {
 				el.focus();
-				var r = document.selection.createRange();
+				let r = document.selection.createRange();
 				if (r == null) {
 					return 0;
 				}
-				var re = el.createTextRange(), rc = re.duplicate();
+				let re = el.createTextRange(), rc = re.duplicate();
 				re.moveToBookmark(r.getBookmark());
 				rc.setEndPoint('EndToStart', re);
 				return rc.text.length;
@@ -173,13 +175,11 @@ export class CityDialogs {
 		let html = new String();
 		html += `<textarea class="narrator-text"></textarea>`;
 		const submit = async function (html) {
-			const text = $(html).find(".narrator-text").val();
-			const {html :modified_html, taglist, statuslist} = CityHelpers.unifiedSubstitution(text);
-			for ( const tagName of taglist.map(x=>x.name) )
-				await SceneTags.createSceneTag(tagName);
-			await CityHelpers.sendNarratedMessage(modified_html);
+			const text= $(html).find(".narrator-text").val();
+			return text;
 		}
 		const options = {width: 900, height: 800};
+		return await new Promise( (conf, reject) => {
 		const dialog = new Dialog({
 			title: `GM Narration`,
 			content: html,
@@ -211,18 +211,23 @@ export class CityDialogs {
 				one: {
 					icon: '<i class="fas fa-check"></i>',
 					label: "Add",
-					callback: (html) => submit(html)
+					callback: async (html) => {
+						const x = await submit(html);
+						conf(x);
+					}
 				},
 				two: {
 					icon: '<i class="fas fa-times"></i>',
 					label: "Cancel",
-					callback: () => false
+					callback: () => conf(false)
 				}
 			}
 		}, options);
-		if (!$(document).find(".narrator-text").length)
-			dialog.render(true);
+			if (!$(document).find(".narrator-text").length)
+				dialog.render(true);
+		});
 	}
+
 
 	/** List takes a [ { moveId:string , moveOwnerId: string} ]
 	*/
@@ -256,7 +261,7 @@ export class CityDialogs {
 		const templateData = {
 			owners: ownerList
 		}
-		const html =  await renderTemplate(`${game.system.path}/templates/dialogs/gm-move-chooser.hbs`, templateData);
+		const html =  await renderTemplate(`${PATH}/templates/dialogs/gm-move-chooser.hbs`, templateData);
 		return new Promise( (conf, _rej) => {
 			const options = {};
 			const dialog = new Dialog({
@@ -282,6 +287,35 @@ export class CityDialogs {
 
 		}, options);
 
+		});
+	}
+
+	static async DowntimePCSelector(actor) {
+		if (!actor) throw new Error("Actor is undefined");
+		const templateData = {actor};
+		const html = await renderTemplate(`${PATH}/templates/dialogs/pc-downtime-chooser.hbs`, templateData);
+		return new Promise( (conf, rej)  =>  {
+			const options = {};
+			const dialog = new Dialog(  {
+				title: localize("CityOfMist.dialog.pcdowntime.title") + actor.displayedName,
+				content: html,
+				buttons: {
+					one: {
+						icon: '<i class="fas fa-check"></i>',
+						callback: async(html) => {
+							const choice = $(html).find(`input[name="downtime-action"]:checked`).val() ;//TODO
+							conf(choice, actor);
+						}
+					},
+					two: {
+						icon: '<i class="fas fa-times"></i>',
+						label: localize("CityOfMist.command.cancel"),
+						callback: async () => conf(null)
+					}
+				},
+			}, options);
+
+			dialog.render(true);
 		});
 	}
 
@@ -590,6 +624,40 @@ export class CityDialogs {
 		}
 		return list;
 	}
+
+
+	static async downtimeGMMoveDialog(actorWithMovesList) {
+		const html = await renderTemplate("systems/city-of-mist/templates/dialogs/downtime-GM-moves.hbs", {list : actorWithMovesList});
+		return await new Promise( (conf, rej) => {
+			const options = {};
+			const dialog = new Dialog( {
+				title: localize("CityOfMist.dialog.downtime.title"),
+				content: html,
+				render: (html) => {
+					$(html).find('.gmmove-select').click( async (event) => {
+						const move_id = getClosestData(event, "moveId");
+						const ownerId = getClosestData(event, "ownerId");
+						const tokenId = getClosestData(event, "tokenId");
+						const owner = await CityHelpers.getOwner(ownerId, tokenId);
+						const move = await owner.getGMMove(move_id);
+						await move.GMMovePopUp(owner);
+					});
+				},
+				buttons: {
+					one: {
+						icon: '<i class="fas fa-check"></i>',
+						label: "Close",
+						callback: async (html) => {
+							conf(true);
+						}
+					},
+				},
+			}, options);
+			dialog.render(true);
+		});
+	}
+
+
 
 } //end of class
 

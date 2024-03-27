@@ -69,7 +69,7 @@ export class CityCharacterSheet extends CityActorSheet {
 
 		const moveList = CityHelpers.getMoves();
 		data.coremoves = moveList.filter( x=> x.system.category == "Core");
-		data.specialmoves = moveList.filter( x=> x.system.category == "Advanced");
+		data.specialmoves = moveList.filter( x=> x.system.category == "Advanced" && this.actor.canUseMove(x));
 		data.shbmoves = moveList.filter( x=> x.system.category == "SHB");
 		return data;
 	}
@@ -223,14 +223,16 @@ export class CityCharacterSheet extends CityActorSheet {
 
 	activateListeners(html) {
 		super.activateListeners(html);
+		html.find(".theme-name-input").each( function () {
+			const text = $(this).val();
+			if (text.length > 26)
+				$(this).css("font-size", "12pt");
+		});
 		if (!this.options.editable) return;
 		//Everything below here is only needed if the sheet is editable
 		html.find(".non-char-theme-name"	).click( this.openOwnerSheet.bind(this));
 		html.find(".crew-prev").click(this.crewPrevious.bind(this));
 		html.find(".crew-next").click(this.crewNext.bind(this));
-		if (!this.actor.hasFlashbackAvailable()) {
-			let ret = html.find(`option`).filter(function () {return $(this).html() == " Flashback "}).remove();
-		}
 	}
 
 	async monologue () {
@@ -264,7 +266,7 @@ export class CityCharacterSheet extends CityActorSheet {
 		const actor = this.actor;
 		const themeName = theme.name;
 		await actor.addAttention(theme.id);
-		await CityHelpers.modificationLog(actor, `Attention Added`, theme, `Opening Monologue - Current ${await theme.getAttention()}`);
+		// await CityHelpers.modificationLog(actor, `Attention Added`, theme, `Opening Monologue - Current ${await theme.getAttention()}`);
 	}
 
 	async monologueDialog () {

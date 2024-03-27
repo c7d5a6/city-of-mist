@@ -3,13 +3,25 @@ import {SceneTags} from "./scene-tags.mjs";
 import {CityHelpers} from "./city-helpers.js";
 import {HTMLHandlers} from "./universal-html-handlers.mjs";
 import {SelectedTagsAndStatus} from "./selected-tags.mjs";
+import { CitySettings } from "./settings.js";
 
 export class StoryTagDisplayContainer {
 
 	constructor() {
 		this.element = HTMLTools.div(["scene-tag-window"]);
-		const width =  (-50) + $(document).find("#controls").width()+320;
-		const height =  50+ $(document).find("#navigation").height();
+		let width, height;
+		switch (CitySettings.sceneTagWindowPosition()) {
+			case "left":
+				width =  (-50) + $(document).find("#controls").width();
+				height =  50+ $(document).find("#navigation").height();
+				break;
+			case "right":
+				width =  (-350) + $(document).find("#ui-right").position().left;
+				height =  50+ $(document).find("#navigation").height();
+				break;
+			default:
+				return;
+		}
 		this.element.style.left = `${width}px`;
 		this.element.style.top = `${height}px`;
 		this.dataElement = HTMLTools.div("scene-tags-template");
@@ -36,17 +48,17 @@ export class StoryTagDisplayContainer {
 			this.dataElement.innerHTML= "";
 			return false;
 		}
-		const combatActors = ui.combat.combats
-			.map( combat => {
-				return combat.combatants.map( battler => battler.actor);
+		const combatants = ui.combat.combats
+			.flatMap( combat => {
+				return combat.combatants.map( battler => battler);
 			})
-			.flat(1)
-			.filter(actor => {
+			.filter(combatant => {
 				if (CityHelpers.sceneTagWindowFilterEmpty())
-					return actor.storyTagsAndStatuses.length > 0;
+					return combatant.actor.storyTagsAndStatuses.length > 0;
 				else return true;
 			}
 			);
+		const combatActors = combatants.map( x=> x.actor);
 		const showcasedActors = game.actors
 			.filter( actor => !combatActors.includes(actor)
 				&& actor.items.some( item=> item.isShowcased)
@@ -63,7 +75,7 @@ export class StoryTagDisplayContainer {
 		// console.log(`Shrink: ${shrink}, cas: ${combatActorsSize}, saz: ${showcasedActorsSize}`);
 		const templateData = {
 			tagsAndStatuses,
-			combatActors,
+			combatants,
 			showcasedActors,
 			shrink
 		};
@@ -78,10 +90,15 @@ export class StoryTagDisplayContainer {
 		const html = $(this.element);
 		html.find(".create-story-tag").click( this.createStoryTag );
 		html.find(".create-status").click( this.createStatus );
+		html.find(".combatant-name").click( this.centerOnToken );
+		html.find(".combatant-name").rightclick( this.openSheet );
+
+		$(this.element).find(".toggle-combat").on("click", ev => CityHelpers.toggleCombat(ev))
+
 	}
 
 	async createStoryTag(event) {
-		//somewhat hack-y code with the exception as a branch
+		//somewhat hacky code with the exception as a branch
 		try {
 			const ownerId = getClosestData(event, "ownerId");
 			const tokenId = getClosestData(event, "tokenId");
@@ -96,7 +113,7 @@ export class StoryTagDisplayContainer {
 	}
 
 	async createStatus (event) {
-		//somewhat hack-y code with the exception as a branch
+		//somewhat hacky code with the exception as a branch
 		try {
 			const ownerId = getClosestData(event, "ownerId");
 			const tokenId = getClosestData(event, "tokenId");
@@ -106,6 +123,35 @@ export class StoryTagDisplayContainer {
 			return await SceneTags.createSceneStatus();
 		}
 		return await HTMLHandlers.createStatus(event);
+	}
+
+	async centerOnToken(event) {
+		const ownerId = HTMLTools.getClosestDataNT(event, "ownerId");
+		const tokenId = HTMLTools.getClosestDataNT(event, "tokenId");
+		const sceneId = HTMLTools.getClosestDataNT(event, "sceneId");
+		if (!tokenId)  return;
+		const token = game.scenes.current.tokens.get(tokenId)?.object;
+		if (!token || !token.actor.isOwner) return;
+		if (token.center)
+			await canvas.animatePan (token.center);
+	}
+
+	async openSheet(event) {
+		const ownerId = HTMLTools.getClosestDataNT(event, "ownerId");
+		const tokenId = HTMLTools.getClosestDataNT(event, "tokenId");
+		const sceneId = HTMLTools.getClosestDataNT(event, "sceneId");
+		if (tokenId)  {
+			const token = game.scenes.current.tokens.get(tokenId)
+			if (token && token.actor.isOwner)
+				token.actor.sheet.render(true);
+			return;
+		} else if (ownerId) {
+			const actor = game.actors.get(ownerId);
+			if (actor && actor.isOwner) {
+				actor.sheet.render(true);
+			}
+			return;
+			}
 	}
 
 }
